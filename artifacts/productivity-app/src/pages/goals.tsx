@@ -207,6 +207,13 @@ export default function Goals() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [isEditingQuote, setIsEditingQuote] = useState(false);
+  const [customQuote, setCustomQuote] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("goals-custom-quote") || "";
+    }
+    return "";
+  });
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const { data: goals = [], isLoading } = useQuery({ queryKey: ["/api/goals"], queryFn: fetchGoals });
@@ -280,7 +287,15 @@ export default function Goals() {
     "Push yourself, because no one else is going to do it for you.",
     "Great things never come from comfort zones.",
   ];
-  const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  const quote = customQuote || QUOTES[new Date().getDate() % QUOTES.length];
+
+  const handleSaveQuote = (newQuote: string) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("goals-custom-quote", newQuote);
+      setCustomQuote(newQuote);
+    }
+    setIsEditingQuote(false);
+  };
 
   return (
     <Layout>
@@ -305,7 +320,16 @@ export default function Goals() {
                 Make it<br />
                 <span className="text-primary">happen.</span>
               </h1>
-              <p className="text-muted-foreground text-sm md:text-base max-w-sm italic">"{quote}"</p>
+              <div className="flex items-start gap-3 max-w-sm group">
+                <p className="text-muted-foreground text-sm md:text-base italic">"{quote}"</p>
+                <button
+                  onClick={() => setIsEditingQuote(true)}
+                  className="mt-1 p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                  title="Edit your quote"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             {/* Stats ring cluster */}
@@ -583,7 +607,7 @@ export default function Goals() {
           </TabsContent>
         </Tabs>
 
-        {/* ── EDIT DIALOG ────────────────────────────────────────────── */}
+        {/* ── EDIT GOAL DIALOG ────────────────────────────────────────────── */}
         {editingGoal && (
           <Dialog open={!!editingGoal} onOpenChange={(open) => { if (!open) { setEditingGoal(null); editForm.reset(); } }}>
             <DialogContent className="bg-card border-border/50 shadow-2xl">
@@ -630,6 +654,39 @@ export default function Goals() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* ── EDIT QUOTE DIALOG ────────────────────────────────────────────── */}
+        <Dialog open={isEditingQuote} onOpenChange={setIsEditingQuote}>
+          <DialogContent className="bg-card border-border/50 shadow-2xl">
+            <DialogHeader><DialogTitle className="text-xl font-display">Edit Your Quote</DialogTitle></DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="text-sm font-medium text-foreground">Your Motivation</label>
+                <textarea
+                  defaultValue={customQuote}
+                  onChange={(e) => {}}
+                  className="w-full mt-2 p-3 rounded-lg bg-background border border-border/50 text-foreground text-sm min-h-24 resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Add your own motivational quote or message…"
+                  id="quoteInput"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Leave empty to use the default daily quotes.</p>
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={() => setIsEditingQuote(false)}>Cancel</Button>
+                <Button
+                  type="button"
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => {
+                    const input = document.getElementById("quoteInput") as HTMLTextAreaElement;
+                    handleSaveQuote(input?.value || "");
+                  }}
+                >
+                  Save Quote
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

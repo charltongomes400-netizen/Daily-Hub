@@ -3,8 +3,11 @@ import { db } from "@workspace/db";
 import { gymExercisesTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { requireAuth, getUserId } from "../middleware/auth";
 
 const router: IRouter = Router();
+
+router.use(requireAuth);
 
 const CreateExerciseBody = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
@@ -27,19 +30,23 @@ const UpdateExerciseBody = z.object({
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
 
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res) => {
+  const userId = getUserId(req);
   const exercises = await db
     .select()
     .from(gymExercisesTable)
+    .where(eq(gymExercisesTable.userId, userId))
     .orderBy(gymExercisesTable.dayOfWeek, gymExercisesTable.sortOrder, gymExercisesTable.id);
   res.json(exercises);
 });
 
 router.post("/", async (req, res) => {
+  const userId = getUserId(req);
   const body = CreateExerciseBody.parse(req.body);
   const [exercise] = await db
     .insert(gymExercisesTable)
     .values({
+      userId,
       dayOfWeek: body.dayOfWeek,
       name: body.name,
       sets: body.sets ?? null,
@@ -53,6 +60,7 @@ router.post("/", async (req, res) => {
 });
 
 router.patch("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = IdParam.parse(req.params);
   const body = UpdateExerciseBody.parse(req.body);
   const updates: Partial<typeof gymExercisesTable.$inferInsert> = {};
@@ -65,14 +73,17 @@ router.patch("/:id", async (req, res) => {
   const [updated] = await db
     .update(gymExercisesTable)
     .set(updates)
-    .where(eq(gymExercisesTable.id, id))
+    .where(and(eq(gymExercisesTable.id, id), eq(gymExercisesTable.userId, userId)))
     .returning();
   res.json(updated);
 });
 
 router.delete("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = IdParam.parse(req.params);
-  await db.delete(gymExercisesTable).where(eq(gymExercisesTable.id, id));
+  await db
+    .delete(gymExercisesTable)
+    .where(and(eq(gymExercisesTable.id, id), eq(gymExercisesTable.userId, userId)));
   res.status(204).send();
 });
 

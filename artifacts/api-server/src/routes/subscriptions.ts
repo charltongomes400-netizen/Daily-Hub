@@ -1,18 +1,26 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { subscriptionsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import {
   CreateSubscriptionBody,
   UpdateSubscriptionBody,
   UpdateSubscriptionParams,
   DeleteSubscriptionParams,
 } from "@workspace/api-zod";
+import { requireAuth, getUserId } from "../middleware/auth";
 
 const router: IRouter = Router();
 
-router.get("/", async (_req, res) => {
-  const subs = await db.select().from(subscriptionsTable).orderBy(subscriptionsTable.createdAt);
+router.use(requireAuth);
+
+router.get("/", async (req, res) => {
+  const userId = getUserId(req);
+  const subs = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, userId))
+    .orderBy(subscriptionsTable.createdAt);
   res.json(
     subs.map((s) => ({
       ...s,
@@ -24,10 +32,12 @@ router.get("/", async (_req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  const userId = getUserId(req);
   const body = CreateSubscriptionBody.parse(req.body);
   const [sub] = await db
     .insert(subscriptionsTable)
     .values({
+      userId,
       name: body.name,
       amount: String(body.amount),
       billingCycle: body.billingCycle,
@@ -46,6 +56,7 @@ router.post("/", async (req, res) => {
 });
 
 router.patch("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = UpdateSubscriptionParams.parse(req.params);
   const body = UpdateSubscriptionBody.parse(req.body);
 
@@ -61,7 +72,7 @@ router.patch("/:id", async (req, res) => {
   const [sub] = await db
     .update(subscriptionsTable)
     .set(updateData)
-    .where(eq(subscriptionsTable.id, id))
+    .where(and(eq(subscriptionsTable.id, id), eq(subscriptionsTable.userId, userId)))
     .returning();
 
   if (!sub) {
@@ -78,8 +89,11 @@ router.patch("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = DeleteSubscriptionParams.parse(req.params);
-  await db.delete(subscriptionsTable).where(eq(subscriptionsTable.id, id));
+  await db
+    .delete(subscriptionsTable)
+    .where(and(eq(subscriptionsTable.id, id), eq(subscriptionsTable.userId, userId)));
   res.status(204).send();
 });
 

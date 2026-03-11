@@ -3,8 +3,9 @@ import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid, X, LayoutDashboard, CheckCircle2, Wallet,
-  Dumbbell, Target, StickyNote,
+  Dumbbell, Target, StickyNote, LogOut, ChevronUp,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const APPS = [
   { title: "Dashboard", url: "/",       icon: LayoutDashboard, gradient: "from-violet-500/20 to-violet-600/5",  accent: "text-violet-400",  bg: "bg-violet-500/12",   border: "border-violet-500/20",  ring: "ring-violet-400/40",  glow: "shadow-violet-500/10" },
@@ -15,9 +16,22 @@ const APPS = [
   { title: "Notes",     url: "/notes",   icon: StickyNote,      gradient: "from-amber-500/20 to-amber-600/5",   accent: "text-amber-400",   bg: "bg-amber-500/12",    border: "border-amber-500/20",   ring: "ring-amber-400/40",   glow: "shadow-amber-500/10"  },
 ];
 
+function Avatar({ src, name, size = 8 }: { src?: string | null; name?: string; size?: number }) {
+  const initials = name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() ?? "?";
+  return src ? (
+    <img src={src} alt={name} className={`w-${size} h-${size} rounded-full object-cover ring-1 ring-border/40`} referrerPolicy="no-referrer" />
+  ) : (
+    <div className={`w-${size} h-${size} rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0`}>
+      <span className="text-primary text-xs font-semibold">{initials}</span>
+    </div>
+  );
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [launcherOpen, setLauncherOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -25,6 +39,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setLauncherOpen(false);
+    setUserMenuOpen(false);
   }, [location]);
 
   const currentApp = APPS.find(
@@ -78,6 +93,43 @@ export function Layout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* ── User section ── */}
+        {user && (
+          <div className="px-3 pb-4 relative">
+            <button
+              onClick={() => setUserMenuOpen(o => !o)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary/60 border border-transparent hover:border-border/40 transition-all group"
+            >
+              <Avatar src={user.avatarUrl} name={user.name} size={8} />
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+              </div>
+              <ChevronUp className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${userMenuOpen ? "" : "rotate-180"}`} />
+            </button>
+
+            <AnimatePresence>
+              {userMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute bottom-full left-3 right-3 mb-1 bg-popover border border-border/50 rounded-xl shadow-xl overflow-hidden"
+                >
+                  <button
+                    onClick={() => { setUserMenuOpen(false); logout(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </aside>
 
       {/* ── Main content column ── */}
@@ -101,13 +153,24 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </div>
 
-          <button
-            onClick={() => setLauncherOpen(true)}
-            aria-label="Open app launcher"
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {user && (
+              <button
+                onClick={() => { logout(); }}
+                title="Sign out"
+                className="hidden lg:flex w-9 h-9 items-center justify-center rounded-xl bg-secondary/70 hover:bg-red-500/10 border border-border/50 text-muted-foreground hover:text-red-400 transition-all active:scale-95"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              onClick={() => setLauncherOpen(true)}
+              aria-label="Open app launcher"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
         {/* ── Page content ── */}
@@ -129,12 +192,20 @@ export function Layout({ children }: { children: ReactNode }) {
           >
             <div className="flex items-center justify-between px-5 py-5 pb-3 border-b border-border/30">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                  <span className="text-primary-foreground font-bold text-sm">PH</span>
-                </div>
+                {user ? (
+                  <Avatar src={user.avatarUrl} name={user.name} size={10} />
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                    <span className="text-primary-foreground font-bold text-sm">PH</span>
+                  </div>
+                )}
                 <div>
-                  <p className="font-display font-bold text-base text-foreground leading-tight">Productivity Hub</p>
-                  <p className="text-xs text-muted-foreground">Choose an app</p>
+                  <p className="font-display font-bold text-base text-foreground leading-tight">
+                    {user ? user.name : "Productivity Hub"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {user ? user.email : "Choose an app"}
+                  </p>
                 </div>
               </div>
               <button
@@ -188,6 +259,18 @@ export function Layout({ children }: { children: ReactNode }) {
                 })}
               </div>
             </div>
+
+            {user && (
+              <div className="px-5 pb-6 border-t border-border/30 pt-4">
+                <button
+                  onClick={() => { setLauncherOpen(false); logout(); }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-secondary/60 hover:bg-red-500/10 border border-border/40 hover:border-red-500/20 text-sm text-muted-foreground hover:text-red-400 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

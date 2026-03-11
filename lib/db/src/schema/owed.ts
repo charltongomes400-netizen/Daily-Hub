@@ -2,6 +2,7 @@ import { pgTable, serial, text, numeric, timestamp } from "drizzle-orm/pg-core";
 
 export const owedTable = pgTable("owed", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   fromName: text("from_name").notNull(),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   description: text("description").notNull(),

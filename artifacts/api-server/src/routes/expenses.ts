@@ -1,12 +1,15 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { expensesTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { requireAuth, getUserId } from "../middleware/auth";
 
 const router: IRouter = Router();
 
-const CreateExpenseBodyFixed = z.object({
+router.use(requireAuth);
+
+const CreateExpenseBody = z.object({
   title: z.string().min(1),
   amount: z.coerce.number().positive(),
   type: z.enum(["expense", "income"]).default("expense"),
@@ -15,9 +18,7 @@ const CreateExpenseBodyFixed = z.object({
   notes: z.string().optional(),
 });
 
-const DeleteExpenseParamsFixed = z.object({
-  id: z.coerce.number().int().positive(),
-});
+const IdParam = z.object({ id: z.coerce.number().int().positive() });
 
 function serializeExpense(e: typeof expensesTable.$inferSelect) {
   return {
@@ -28,16 +29,23 @@ function serializeExpense(e: typeof expensesTable.$inferSelect) {
   };
 }
 
-router.get("/", async (_req, res) => {
-  const expenses = await db.select().from(expensesTable).orderBy(expensesTable.date);
+router.get("/", async (req, res) => {
+  const userId = getUserId(req);
+  const expenses = await db
+    .select()
+    .from(expensesTable)
+    .where(eq(expensesTable.userId, userId))
+    .orderBy(expensesTable.date);
   res.json(expenses.map(serializeExpense));
 });
 
 router.post("/", async (req, res) => {
-  const body = CreateExpenseBodyFixed.parse(req.body);
+  const userId = getUserId(req);
+  const body = CreateExpenseBody.parse(req.body);
   const [expense] = await db
     .insert(expensesTable)
     .values({
+      userId,
       title: body.title,
       amount: String(body.amount),
       type: body.type,
@@ -50,8 +58,9 @@ router.post("/", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const { id } = DeleteExpenseParamsFixed.parse(req.params);
-  await db.delete(expensesTable).where(eq(expensesTable.id, id));
+  const userId = getUserId(req);
+  const { id } = IdParam.parse(req.params);
+  await db.delete(expensesTable).where(and(eq(expensesTable.id, id), eq(expensesTable.userId, userId)));
   res.status(204).send();
 });
 

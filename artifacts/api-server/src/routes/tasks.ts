@@ -1,18 +1,26 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { tasksTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import {
   CreateTaskBody,
   UpdateTaskBody,
   UpdateTaskParams,
   DeleteTaskParams,
 } from "@workspace/api-zod";
+import { requireAuth, getUserId } from "../middleware/auth";
 
 const router: IRouter = Router();
 
-router.get("/", async (_req, res) => {
-  const tasks = await db.select().from(tasksTable).orderBy(tasksTable.createdAt);
+router.use(requireAuth);
+
+router.get("/", async (req, res) => {
+  const userId = getUserId(req);
+  const tasks = await db
+    .select()
+    .from(tasksTable)
+    .where(eq(tasksTable.userId, userId))
+    .orderBy(tasksTable.createdAt);
   res.json(
     tasks.map((t) => ({
       ...t,
@@ -24,10 +32,12 @@ router.get("/", async (_req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  const userId = getUserId(req);
   const body = CreateTaskBody.parse(req.body);
   const [task] = await db
     .insert(tasksTable)
     .values({
+      userId,
       title: body.title,
       description: body.description ?? null,
       priority: body.priority,
@@ -45,6 +55,7 @@ router.post("/", async (req, res) => {
 });
 
 router.patch("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = UpdateTaskParams.parse(req.params);
   const body = UpdateTaskBody.parse(req.body);
 
@@ -61,7 +72,7 @@ router.patch("/:id", async (req, res) => {
   const [task] = await db
     .update(tasksTable)
     .set(updateData)
-    .where(eq(tasksTable.id, id))
+    .where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)))
     .returning();
 
   if (!task) {
@@ -78,8 +89,9 @@ router.patch("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
+  const userId = getUserId(req);
   const { id } = DeleteTaskParams.parse(req.params);
-  await db.delete(tasksTable).where(eq(tasksTable.id, id));
+  await db.delete(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   res.status(204).send();
 });
 

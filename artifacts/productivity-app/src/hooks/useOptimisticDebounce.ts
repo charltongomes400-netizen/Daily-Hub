@@ -4,8 +4,9 @@ export function useOptimisticDebounce<T>(
   flush: (id: number, value: T) => void,
   delay = 2000,
 ) {
-  const valuesRef = useRef<Map<number, T>>(new Map());
-  const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const valuesRef   = useRef<Map<number, T>>(new Map());
+  const inflightRef = useRef<Map<number, T>>(new Map());
+  const timersRef   = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const [, forceUpdate] = useReducer((n: number) => n + 1, 0);
 
   const set = useCallback(
@@ -20,8 +21,10 @@ export function useOptimisticDebounce<T>(
         const finalValue = valuesRef.current.get(id);
         valuesRef.current.delete(id);
         timersRef.current.delete(id);
-        forceUpdate();
-        if (finalValue !== undefined) flush(id, finalValue);
+        if (finalValue !== undefined) {
+          inflightRef.current.set(id, finalValue);
+          flush(id, finalValue);
+        }
       }, delay);
 
       timersRef.current.set(id, timer);
@@ -30,14 +33,22 @@ export function useOptimisticDebounce<T>(
   );
 
   const get = useCallback(
-    (id: number, fallback: T): T =>
-      valuesRef.current.has(id) ? valuesRef.current.get(id)! : fallback,
+    (id: number, fallback: T): T => {
+      if (valuesRef.current.has(id)) return valuesRef.current.get(id)!;
+      if (inflightRef.current.has(id)) {
+        const inflight = inflightRef.current.get(id)!;
+        if (fallback === inflight) inflightRef.current.delete(id);
+        return inflight;
+      }
+      return fallback;
+    },
     [],
   );
 
   const cleanup = useCallback(() => {
     timersRef.current.forEach((timer) => clearTimeout(timer));
     timersRef.current.clear();
+    inflightRef.current.clear();
   }, []);
 
   return { set, get, cleanup };

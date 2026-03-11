@@ -1,4 +1,4 @@
-import { CheckCircle2, LayoutDashboard, Wallet, LogOut } from "lucide-react";
+import { CheckCircle2, LayoutDashboard, Wallet, LogOut, Dumbbell } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
   Sidebar,
@@ -17,6 +17,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Tasks", url: "/tasks", icon: CheckCircle2 },
   { title: "Finance", url: "/finance", icon: Wallet },
+  { title: "Gym", url: "/gym", icon: Dumbbell },
 ];
 
 export function AppSidebar() {

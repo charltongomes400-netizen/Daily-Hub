@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Tasks from "@/pages/tasks";
 import Finance from "@/pages/finance";
+import Gym from "@/pages/gym";
 
 // Create client outside component to persist across renders
 const queryClient = new QueryClient({
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/finance" component={Finance} />
+      <Route path="/gym" component={Gym} />
       <Route component={NotFound} />
     </Switch>
   );

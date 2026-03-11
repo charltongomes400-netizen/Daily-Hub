@@ -4,3 +4,5 @@ export * from "./subscriptions";
 export * from "./categories";
 export * from "./gym";
 export * from "./owed";
+export * from "./notes";
+export * from "./goals";

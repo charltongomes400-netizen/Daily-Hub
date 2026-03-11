@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Layout } from "@/components/layout";
 import {
   useGetTasks, useCreateTask, useUpdateTask, useDeleteTask,
@@ -159,9 +159,39 @@ export default function Tasks() {
   const { mutate: createTask,    isPending: isCreatingTask } = useCreateTask({
     mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }); setIsTaskOpen(false); taskForm.reset(); } }
   });
-  const { mutate: updateTask  } = useUpdateTask({
+  const { mutateAsync: updateTaskAsync  } = useUpdateTask({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
   });
+  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<number>>(() => new Set());
+  const toggleTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      toggleTimers.current.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
+  const handleToggleComplete = useCallback((taskId: number, currentCompleted: boolean) => {
+    if (updatingTaskIds.has(taskId)) return;
+
+    const existing = toggleTimers.current.get(taskId);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(() => {
+      toggleTimers.current.delete(taskId);
+      setUpdatingTaskIds(prev => new Set(prev).add(taskId));
+      updateTaskAsync({ id: taskId, data: { completed: !currentCompleted } })
+        .finally(() => {
+          setUpdatingTaskIds(prev => {
+            const next = new Set(prev);
+            next.delete(taskId);
+            return next;
+          });
+        });
+    }, 300);
+
+    toggleTimers.current.set(taskId, timer);
+  }, [updatingTaskIds, updateTaskAsync]);
   const { mutate: deleteTask  } = useDeleteTask({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
   });
@@ -601,8 +631,9 @@ export default function Tasks() {
                         ${isOverdue ? "border-destructive/50 bg-destructive/5" : ""}`}>
 
                         <button
-                          onClick={() => updateTask({ id: task.id, data: { completed: !task.completed } })}
-                          className={`mt-1 rounded-full transition-colors shrink-0 ${task.completed ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                          onClick={() => handleToggleComplete(task.id, task.completed)}
+                          disabled={updatingTaskIds.has(task.id)}
+                          className={`mt-1 rounded-full transition-colors shrink-0 ${updatingTaskIds.has(task.id) ? "opacity-50 cursor-not-allowed" : ""} ${task.completed ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                         >
                           {task.completed ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
                         </button>

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticDebounce } from "@/hooks/useOptimisticDebounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,6 +232,13 @@ export default function Goals() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/goals"] }),
   });
 
+  const { set: setProgress, get: getProgress, cleanup: cleanupProgress } =
+    useOptimisticDebounce<number>(
+      useCallback((id: number, progress: number) => updateMutation.mutate({ id, data: { progress } }), [updateMutation]),
+      2000,
+    );
+  useEffect(() => cleanupProgress, [cleanupProgress]);
+
   const form = useForm<z.infer<typeof goalSchema>>({
     resolver: zodResolver(goalSchema),
     defaultValues: { title: "", description: "", targetDate: "", category: "" },
@@ -270,7 +278,7 @@ export default function Goals() {
   const completed = goals.filter(g => g.status === "completed");
   const total     = goals.length;
   const pct       = total === 0 ? 0 : Math.round((completed.length / total) * 100);
-  const avgProgress = active.length === 0 ? 0 : Math.round(active.reduce((s, g) => s + g.progress, 0) / active.length);
+  const avgProgress = active.length === 0 ? 0 : Math.round(active.reduce((s, g) => s + getProgress(g.id, g.progress), 0) / active.length);
 
   /* calendar */
   const monthStart  = startOfMonth(currentMonth);
@@ -451,8 +459,8 @@ export default function Goals() {
                   active.map(goal => (
                     <GoalCard
                       key={goal.id}
-                      goal={goal}
-                      onProgress={(id, p) => updateMutation.mutate({ id, data: { progress: p } })}
+                      goal={{ ...goal, progress: getProgress(goal.id, goal.progress) }}
+                      onProgress={(id, p) => setProgress(id, p)}
                       onComplete={(id) => updateMutation.mutate({ id, data: { status: "completed", progress: 100 } })}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onEdit={handleEditGoal}

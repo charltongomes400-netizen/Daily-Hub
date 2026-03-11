@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/layout";
 import {
   useGetTasks, useCreateTask, useUpdateTask, useDeleteTask,
@@ -13,6 +13,7 @@ import {
   Tv2, Home, Briefcase, Monitor, Tag, Music, BookOpen, Heart,
   Star, Zap, Coffee, Globe, LayoutGrid, Settings, GripVertical,
 } from "lucide-react";
+import { useOptimisticDebounce } from "@/hooks/useOptimisticDebounce";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -159,39 +160,15 @@ export default function Tasks() {
   const { mutate: createTask,    isPending: isCreatingTask } = useCreateTask({
     mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }); setIsTaskOpen(false); taskForm.reset(); } }
   });
-  const { mutateAsync: updateTaskAsync  } = useUpdateTask({
+  const { mutate: updateTask } = useUpdateTask({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
   });
-  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<number>>(() => new Set());
-  const toggleTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-
-  useEffect(() => {
-    return () => {
-      toggleTimers.current.forEach(timer => clearTimeout(timer));
-    };
-  }, []);
-
-  const handleToggleComplete = useCallback((taskId: number, currentCompleted: boolean) => {
-    if (updatingTaskIds.has(taskId)) return;
-
-    const existing = toggleTimers.current.get(taskId);
-    if (existing) clearTimeout(existing);
-
-    const timer = setTimeout(() => {
-      toggleTimers.current.delete(taskId);
-      setUpdatingTaskIds(prev => new Set(prev).add(taskId));
-      updateTaskAsync({ id: taskId, data: { completed: !currentCompleted } })
-        .finally(() => {
-          setUpdatingTaskIds(prev => {
-            const next = new Set(prev);
-            next.delete(taskId);
-            return next;
-          });
-        });
-    }, 300);
-
-    toggleTimers.current.set(taskId, timer);
-  }, [updatingTaskIds, updateTaskAsync]);
+  const { set: setTaskOptimistic, get: getTaskOptimistic, cleanup: cleanupTaskTimers } =
+    useOptimisticDebounce<boolean>(
+      useCallback((id: number, completed: boolean) => updateTask({ id, data: { completed } }), [updateTask]),
+      2000,
+    );
+  useEffect(() => cleanupTaskTimers, [cleanupTaskTimers]);
   const { mutate: deleteTask  } = useDeleteTask({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
   });
@@ -620,26 +597,26 @@ export default function Tasks() {
             <AnimatePresence mode="popLayout">
               <div className="space-y-3 pb-8">
                 {filteredTasks.map(task => {
-                  const isOverdue = task.deadline && !task.completed && isAfter(new Date(), new Date(task.deadline));
+                  const done = getTaskOptimistic(task.id, task.completed);
+                  const isOverdue = task.deadline && !done && isAfter(new Date(), new Date(task.deadline));
                   const cat  = categories.find(c => c.name === task.category);
                   const col  = getColor(cat?.color ?? "blue");
                   const Icon = getIcon(cat?.icon ?? "tag");
                   return (
                     <motion.div key={task.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}>
                       <Card className={`group flex items-start gap-4 p-4 border transition-all duration-200
-                        ${task.completed ? "bg-secondary/30 border-border/30 opacity-60" : "bg-card border-border/50 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"}
+                        ${done ? "bg-secondary/30 border-border/30 opacity-60" : "bg-card border-border/50 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"}
                         ${isOverdue ? "border-destructive/50 bg-destructive/5" : ""}`}>
 
                         <button
-                          onClick={() => handleToggleComplete(task.id, task.completed)}
-                          disabled={updatingTaskIds.has(task.id)}
-                          className={`mt-1 rounded-full transition-colors shrink-0 ${updatingTaskIds.has(task.id) ? "opacity-50 cursor-not-allowed" : ""} ${task.completed ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                          onClick={() => setTaskOptimistic(task.id, !done)}
+                          className={`mt-1 rounded-full transition-colors shrink-0 ${done ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                         >
-                          {task.completed ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                          {done ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
                         </button>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className={`font-semibold text-base truncate ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          <h3 className={`font-semibold text-base truncate ${done ? "line-through text-muted-foreground" : "text-foreground"}`}>
                             {task.title}
                           </h3>
                           {task.description && (

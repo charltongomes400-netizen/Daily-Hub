@@ -81,7 +81,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* ── Main content column ── */}
-      <div className="flex flex-col flex-1 min-w-0 z-10 relative">
+      <div className="flex flex-col flex-1 min-w-0 z-10 relative overflow-hidden">
         {/* ── Header ── */}
         <header className="flex items-center h-14 md:h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
           <Link href="/" className="flex items-center gap-2.5 group lg:hidden">

@@ -24,12 +24,6 @@ export function useOptimisticDebounce<T>(
         if (finalValue !== undefined) {
           inflightRef.current.set(id, finalValue);
           flush(id, finalValue);
-          setTimeout(() => {
-            if (inflightRef.current.get(id) === finalValue) {
-              inflightRef.current.delete(id);
-              forceUpdate();
-            }
-          }, 10000);
         }
       }, delay);
 
@@ -54,6 +48,7 @@ export function useOptimisticDebounce<T>(
   const cleanup = useCallback(() => {
     timersRef.current.forEach((timer) => clearTimeout(timer));
     timersRef.current.clear();
+    valuesRef.current.clear();
     inflightRef.current.clear();
   }, []);
 

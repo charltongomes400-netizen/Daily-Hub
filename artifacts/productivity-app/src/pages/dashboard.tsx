@@ -1,7 +1,7 @@
 import { useGetTasks, useGetExpenses, useGetSubscriptions } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame } from "lucide-react";
+import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { format, subDays, isAfter } from "date-fns";
 import { motion } from "framer-motion";
@@ -34,6 +34,18 @@ export default function Dashboard() {
   const { data: gymExercises = [] } = useQuery<GymExercise[]>({
     queryKey: ["/api/gym"],
     queryFn: () => fetch("/api/gym").then(r => r.json()),
+  });
+
+  interface Note { id: number; title: string; content: string; updatedAt: string; }
+  interface Goal { id: number; title: string; description: string | null; status: "active" | "completed"; progress: number; targetDate: string | null; category: string | null; }
+
+  const { data: notes = [] } = useQuery<Note[]>({
+    queryKey: ["/api/notes"],
+    queryFn: () => fetch("/api/notes").then(r => r.json()),
+  });
+  const { data: goals = [] } = useQuery<Goal[]>({
+    queryKey: ["/api/goals"],
+    queryFn: () => fetch("/api/goals").then(r => r.json()),
   });
 
   const todayIndex = new Date().getDay();
@@ -81,6 +93,11 @@ export default function Dashboard() {
   });
 
   const isLoading = loadingTasks || loadingExpenses || loadingSubs;
+
+  const latestNote = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+  const activeGoals = goals.filter(g => g.status === "active");
+  const completedGoals = goals.filter(g => g.status === "completed");
+  const goalCompletionPct = goals.length === 0 ? 0 : Math.round((completedGoals.length / goals.length) * 100);
 
   if (isLoading) {
     return (
@@ -354,6 +371,134 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* ── Bottom row: Notes + Goals ────────────────────────────── */}
+        <motion.div variants={itemVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-0">
+
+          {/* Latest Note */}
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 group hover:border-primary/30 transition-colors overflow-hidden relative flex flex-col">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <StickyNote className="w-24 h-24 text-primary" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
+              <div>
+                <CardTitle className="font-display">Latest Note</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {notes.length} note{notes.length !== 1 ? "s" : ""} saved
+                </p>
+              </div>
+              <Link href="/notes">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="flex-1 relative z-10">
+              {!latestNote ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/60 flex items-center justify-center mb-3">
+                    <StickyNote className="w-5 h-5 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No notes yet.</p>
+                  <Link href="/notes">
+                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Create your first note →</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-secondary/40 border border-border/30 hover:border-primary/20 transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-foreground leading-snug">{latestNote.title}</h3>
+                    <span className="text-[10px] text-muted-foreground/60 shrink-0 mt-0.5">
+                      {format(new Date(latestNote.updatedAt), 'MMM d')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{latestNote.content}</p>
+                  {notes.length > 1 && (
+                    <p className="text-xs text-muted-foreground/60 mt-3">
+                      +{notes.length - 1} more note{notes.length - 1 !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Goals Progress */}
+          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 group hover:border-primary/30 transition-colors overflow-hidden relative flex flex-col">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Target className="w-24 h-24 text-primary" />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
+              <div>
+                <CardTitle className="font-display">Goals</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {completedGoals.length} of {goals.length} completed · {goalCompletionPct}%
+                </p>
+              </div>
+              <Link href="/goals">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="flex-1 relative z-10">
+              {goals.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/60 flex items-center justify-center mb-3">
+                    <Target className="w-5 h-5 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No goals set yet.</p>
+                  <Link href="/goals">
+                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Set your first goal →</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Overall progress bar */}
+                  {goals.length > 0 && (
+                    <div className="mb-4">
+                      <div className="h-2 rounded-full bg-secondary/60 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${goalCompletionPct}%`,
+                            background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary)/0.7))",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {activeGoals.slice(0, 4).map(goal => (
+                    <div key={goal.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/40 border border-border/30">
+                      <div className="relative w-8 h-8 shrink-0">
+                        <svg width="32" height="32" className="-rotate-90">
+                          <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="3" className="text-border/40" />
+                          <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="3"
+                            strokeDasharray={2 * Math.PI * 12}
+                            strokeDashoffset={2 * Math.PI * 12 * (1 - goal.progress / 100)}
+                            strokeLinecap="round"
+                            className="text-primary transition-all"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground">{goal.progress}%</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{goal.title}</p>
+                        {goal.targetDate && (
+                          <p className="text-xs text-muted-foreground">Due {format(new Date(goal.targetDate), 'MMM d, yy')}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {activeGoals.length > 4 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">+{activeGoals.length - 4} more active goals</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         </motion.div>
       </div>
     </Layout>

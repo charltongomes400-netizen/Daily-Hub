@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Pencil, Check, X, Dumbbell, RefreshCw, CalendarDays } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, Dumbbell, RefreshCw, CalendarDays, Moon, Sunrise } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -293,10 +293,33 @@ function AddExerciseDialog({
   );
 }
 
+function loadRestDays(): Set<number> {
+  try {
+    const saved = localStorage.getItem("gym-rest-days");
+    if (saved) return new Set(JSON.parse(saved) as number[]);
+  } catch {}
+  return new Set();
+}
+
+function saveRestDays(days: Set<number>) {
+  localStorage.setItem("gym-rest-days", JSON.stringify([...days]));
+}
+
 export default function Gym() {
   const queryClient = useQueryClient();
   const todayIndex = new Date().getDay();
   const [selectedDay, setSelectedDay] = useState(todayIndex);
+  const [restDaySet, setRestDaySet] = useState<Set<number>>(loadRestDays);
+
+  const toggleRestDay = (dayIndex: number) => {
+    setRestDaySet(prev => {
+      const next = new Set(prev);
+      if (next.has(dayIndex)) next.delete(dayIndex);
+      else next.add(dayIndex);
+      saveRestDays(next);
+      return next;
+    });
+  };
 
   const { data: allExercises = [], isLoading } = useQuery({
     queryKey: ["/api/gym"],
@@ -325,8 +348,9 @@ export default function Gym() {
 
   const selectedExercises = exercisesByDay[selectedDay] ?? [];
   const totalExercisesAllWeek = allExercises.length;
-  const plannedDays = DAYS.filter((_, i) => exercisesByDay[i].length > 0).length;
-  const restDays = 7 - plannedDays;
+  const trainingDays = DAYS.filter((_, i) => !restDaySet.has(i) && exercisesByDay[i].length > 0).length;
+  const markedRestDays = restDaySet.size;
+  const isSelectedRest = restDaySet.has(selectedDay);
 
   return (
     <Layout>
@@ -351,11 +375,11 @@ export default function Gym() {
             <p className="text-xs text-muted-foreground mt-0.5">Total Exercises</p>
           </Card>
           <Card className="bg-card border-border/50 shadow p-4 text-center">
-            <p className="text-2xl font-display font-bold text-primary">{plannedDays}</p>
+            <p className="text-2xl font-display font-bold text-primary">{trainingDays}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Training Days</p>
           </Card>
           <Card className="bg-card border-border/50 shadow p-4 text-center">
-            <p className="text-2xl font-display font-bold text-muted-foreground">{restDays}</p>
+            <p className="text-2xl font-display font-bold text-amber-400">{markedRestDays}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Rest Days</p>
           </Card>
         </div>
@@ -366,50 +390,77 @@ export default function Gym() {
             const count = exercisesByDay[i].length;
             const isToday = i === todayIndex;
             const isSelected = i === selectedDay;
+            const isRest = restDaySet.has(i);
             return (
               <button
                 key={day}
                 onClick={() => setSelectedDay(i)}
                 className={`
                   relative flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all
-                  ${isSelected
+                  ${isSelected && isRest
+                    ? "bg-amber-400/15 border-amber-400/50 text-amber-400 shadow-md shadow-amber-400/10"
+                    : isSelected
                     ? "bg-primary/10 border-primary/40 text-primary shadow-md shadow-primary/10"
+                    : isRest
+                    ? "bg-amber-400/8 border-amber-400/30 text-amber-400/80 hover:bg-amber-400/12"
                     : isToday
                     ? "bg-accent/5 border-accent/30 text-foreground hover:bg-accent/10"
                     : "bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
                 `}
               >
-                {isToday && (
+                {isToday && !isRest && (
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent" />
                 )}
+                {isRest && (
+                  <span className="absolute top-1.5 right-1.5">
+                    <Moon className="w-3 h-3 text-amber-400" />
+                  </span>
+                )}
                 <span className="text-xs font-semibold uppercase tracking-wider">{DAYS_SHORT[i]}</span>
-                {count > 0 ? (
+                {isRest ? (
+                  <Moon className="w-4 h-4 opacity-70" />
+                ) : count > 0 ? (
                   <span className={`text-lg font-display font-bold leading-none ${isSelected ? "text-primary" : ""}`}>
                     {count}
                   </span>
                 ) : (
                   <span className="text-lg font-display font-bold leading-none opacity-20">–</span>
                 )}
-                {count > 0 && (
+                {isRest ? (
+                  <span className="text-[10px] opacity-70">rest</span>
+                ) : count > 0 ? (
                   <span className="text-[10px] opacity-60">
                     {count === 1 ? "exercise" : "exercises"}
                   </span>
-                )}
+                ) : null}
               </button>
             );
           })}
         </div>
 
         {/* Day detail */}
-        <div className="flex-1 bg-card border border-border/50 rounded-2xl shadow-lg overflow-hidden">
+        <div className={`flex-1 border rounded-2xl shadow-lg overflow-hidden transition-colors ${
+          isSelectedRest ? "bg-amber-400/5 border-amber-400/20" : "bg-card border-border/50"
+        }`}>
           {/* Day header */}
-          <div className="px-6 py-4 border-b border-border/50 bg-secondary/30 flex items-center justify-between">
+          <div className={`px-6 py-4 border-b flex items-center justify-between transition-colors ${
+            isSelectedRest ? "border-amber-400/20 bg-amber-400/8" : "border-border/50 bg-secondary/30"
+          }`}>
             <div>
-              <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-muted-foreground" />
+              <h2 className={`text-lg font-display font-semibold flex items-center gap-2 ${
+                isSelectedRest ? "text-amber-400" : "text-foreground"
+              }`}>
+                {isSelectedRest
+                  ? <Moon className="w-4 h-4" />
+                  : <CalendarDays className="w-4 h-4 text-muted-foreground" />}
                 {DAYS[selectedDay]}
                 {selectedDay === todayIndex && (
-                  <span className="text-xs font-normal bg-accent/15 text-accent px-2 py-0.5 rounded-full">Today</span>
+                  <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
+                    isSelectedRest ? "bg-amber-400/15 text-amber-400" : "bg-accent/15 text-accent"
+                  }`}>Today</span>
+                )}
+                {isSelectedRest && (
+                  <span className="text-xs font-normal bg-amber-400/15 text-amber-400 px-2 py-0.5 rounded-full">Rest Day</span>
                 )}
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
@@ -417,13 +468,42 @@ export default function Gym() {
                 Repeats every week
               </p>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {selectedExercises.length} {selectedExercises.length === 1 ? "exercise" : "exercises"}
-            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleRestDay(selectedDay)}
+              className={`h-8 text-xs gap-1.5 transition-all ${
+                isSelectedRest
+                  ? "border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 hover:border-amber-400/60"
+                  : "border-border/60 text-muted-foreground hover:text-amber-400 hover:border-amber-400/40 hover:bg-amber-400/8"
+              }`}
+            >
+              {isSelectedRest
+                ? <><Sunrise className="w-3.5 h-3.5" />Unmark rest day</>
+                : <><Moon className="w-3.5 h-3.5" />Mark as rest day</>}
+            </Button>
           </div>
 
           <div className="p-6">
-            {isLoading ? (
+            {isSelectedRest ? (
+              <div className="py-12 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-amber-400/10 flex items-center justify-center mx-auto mb-4">
+                  <Moon className="w-8 h-8 text-amber-400/60" />
+                </div>
+                <p className="text-amber-400/80 font-semibold text-lg">Rest Day</p>
+                <p className="text-sm text-muted-foreground/60 mt-1.5">
+                  Recovery is part of the plan. Relax — you've earned it.
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleRestDay(selectedDay)}
+                  className="mt-4 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                >
+                  <Sunrise className="w-3.5 h-3.5" />Switch to training day
+                </Button>
+              </div>
+            ) : isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="h-16 bg-secondary/50 rounded-xl animate-pulse" />
@@ -450,12 +530,14 @@ export default function Gym() {
               </div>
             )}
 
-            <AddExerciseDialog
-              dayOfWeek={selectedDay}
-              dayName={DAYS[selectedDay]}
-              currentCount={selectedExercises.length}
-              onAdd={(data) => createMutation.mutate(data)}
-            />
+            {!isSelectedRest && (
+              <AddExerciseDialog
+                dayOfWeek={selectedDay}
+                dayName={DAYS[selectedDay]}
+                currentCount={selectedExercises.length}
+                onAdd={(data) => createMutation.mutate(data)}
+              />
+            )}
           </div>
         </div>
       </div>

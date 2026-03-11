@@ -146,9 +146,9 @@ export default function Login() {
           </Button>
 
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-border/50" />
+            <div className="flex-1 h-px bg-white/10" />
             <span className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-border/50" />
+            <div className="flex-1 h-px bg-white/10" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">

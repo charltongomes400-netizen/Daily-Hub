@@ -70,7 +70,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     />
                   )}
                   <app.icon className={`w-5 h-5 shrink-0 ${isActive ? app.accent : "group-hover:text-foreground"}`} />
-                  <span className={`font-semibold text-sm ${isActive ? "text-foreground" : ""}`}>
+                  <span className={`font-semibold text-sm ${isActive ? app.accent : ""}`}>
                     {app.title}
                   </span>
                 </div>

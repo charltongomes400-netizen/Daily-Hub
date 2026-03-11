@@ -82,7 +82,7 @@ const catSchema = z.object({
   icon:  z.string().min(1),
 });
 
-type StatusFilter = "all" | "active" | "completed";
+type StatusFilter = "all" | "pending" | "active" | "completed";
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Tasks() {
@@ -185,7 +185,12 @@ export default function Tasks() {
   /* derived */
   const filteredTasks = tasks
     .filter(t => activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))
-    .filter(t => { if (statusFilter === "active") return !t.completed; if (statusFilter === "completed") return t.completed; return true; })
+    .filter(t => {
+      if (statusFilter === "pending")   return !t.completed;
+      if (statusFilter === "active")    return !t.completed;
+      if (statusFilter === "completed") return t.completed;
+      return true;
+    })
     .sort((a, b) => {
       if (a.completed !== b.completed) return a.completed ? 1 : -1;
       const pMap = { high: 3, medium: 2, low: 1 };
@@ -449,15 +454,33 @@ export default function Tasks() {
         </div>
 
         {/* ── Status filter ── */}
-        <div className="flex gap-2 mb-6 p-1 bg-secondary/50 rounded-xl w-fit">
-          {(["all", "active", "completed"] as const).map(f => (
+        <div className="flex gap-1 mb-6 p-1 bg-secondary/50 rounded-xl w-fit">
+          {([
+            { key: "all",       label: "All",       count: tasks.filter(t => activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory)).length },
+            { key: "pending",   label: "Pending",   count: tasks.filter(t => !t.completed && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
+            { key: "active",    label: "Active",    count: tasks.filter(t => !t.completed && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
+            { key: "completed", label: "Completed", count: tasks.filter(t => t.completed  && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
+          ] as const).map(({ key, label, count }) => (
             <button
-              key={f}
-              onClick={() => setStatusFilter(f)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all capitalize
-                ${statusFilter === f ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all
+                ${statusFilter === key
+                  ? key === "pending"
+                    ? "bg-amber-500/15 text-amber-400 shadow-sm"
+                    : "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}
             >
-              {f}
+              {label}
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums ${
+                statusFilter === key
+                  ? key === "pending"
+                    ? "bg-amber-500/20 text-amber-400"
+                    : "bg-muted text-muted-foreground"
+                  : "bg-background/60 text-muted-foreground"
+              }`}>
+                {count}
+              </span>
             </button>
           ))}
         </div>

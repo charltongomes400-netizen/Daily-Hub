@@ -63,7 +63,10 @@ export default function Login() {
       if (!res.ok) {
         if (data.fields) {
           setFieldErrors(data.fields);
-        } else {
+        }
+        if (res.status === 401) {
+          setFieldErrors({ email: ["Invalid email or password"], password: ["Invalid email or password"] });
+        } else if (!data.fields) {
           setError(data.error || "Something went wrong");
         }
         return;

@@ -173,7 +173,7 @@ router.post("/register", async (req, res) => {
       .limit(1);
 
     if (existing) {
-      res.status(409).json({ error: "An account with this email already exists" });
+      res.status(409).json({ error: "An account with this email already exists", fields: { email: ["An account with this email already exists"] } });
       return;
     }
 

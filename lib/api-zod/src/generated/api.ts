@@ -68,7 +68,7 @@ export const CreateTaskBody = zod.object({
   description: zod.string().nullish(),
   priority: zod.enum(["low", "medium", "high"]),
   category: zod.string(),
-  deadline: zod.date().nullish(),
+  deadline: zod.string().nullish(),
 });
 
 /**
@@ -84,7 +84,7 @@ export const UpdateTaskBody = zod.object({
   completed: zod.boolean().optional(),
   priority: zod.enum(["low", "medium", "high"]).optional(),
   category: zod.string().optional(),
-  deadline: zod.date().nullish(),
+  deadline: zod.string().nullish(),
 });
 
 export const UpdateTaskResponse = zod.object({

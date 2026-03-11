@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface Goal {
   id: number;
@@ -348,7 +349,9 @@ export default function Goals() {
                       <FormField control={form.control} name="targetDate" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Target Date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                          <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                          <FormControl>
+                            <DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" />
+                          </FormControl>
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="category" render={({ field }) => (

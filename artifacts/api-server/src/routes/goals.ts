@@ -15,11 +15,11 @@ const CreateGoalBody = z.object({
 
 const UpdateGoalBody = z.object({
   title: z.string().min(1).optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   targetDate: z.string().nullable().optional(),
   status: z.enum(["active", "completed"]).optional(),
   progress: z.number().int().min(0).max(100).optional(),
-  category: z.string().optional(),
+  category: z.string().nullable().optional(),
 });
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });

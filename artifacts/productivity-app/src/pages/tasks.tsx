@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import {
   useGetTasks, useCreateTask, useUpdateTask, useDeleteTask,
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle,
   Tv2, Home, Briefcase, Monitor, Tag, Music, BookOpen, Heart,
-  Star, Zap, Coffee, Globe, LayoutGrid, X,
+  Star, Zap, Coffee, Globe, LayoutGrid, Settings, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +21,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -104,15 +108,55 @@ export default function Tasks() {
   const { mutate: deleteCat   } = useDeleteCategory({
     mutation: { onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setActiveCategory("all");
     } }
   });
 
   /* local state */
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [statusFilter,   setStatusFilter]   = useState<StatusFilter>("all");
-  const [isTaskOpen,     setIsTaskOpen]     = useState(false);
-  const [isCatOpen,      setIsCatOpen]      = useState(false);
+  const [activeCategory,   setActiveCategory]   = useState<string>("all");
+  const [statusFilter,     setStatusFilter]     = useState<StatusFilter>("all");
+  const [isTaskOpen,       setIsTaskOpen]       = useState(false);
+  const [isCatOpen,        setIsCatOpen]        = useState(false);
+  const [isSettingsOpen,   setIsSettingsOpen]   = useState(false);
+  const [catToDelete,      setCatToDelete]      = useState<{ id: number; name: string } | null>(null);
+  const [catOrder,         setCatOrder]         = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem("cat-order") ?? "[]"); } catch { return []; }
+  });
+
+  /* keep local order in sync when categories load/change */
+  useEffect(() => {
+    if (!categories.length) return;
+    const ids = categories.map(c => c.id);
+    const existing = catOrder.filter(id => ids.includes(id));
+    const added    = ids.filter(id => !existing.includes(id));
+    const merged   = [...existing, ...added];
+    if (merged.join() !== catOrder.join()) {
+      setCatOrder(merged);
+      localStorage.setItem("cat-order", JSON.stringify(merged));
+    }
+  }, [categories]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const sortedCategories = [...categories].sort(
+    (a, b) => catOrder.indexOf(a.id) - catOrder.indexOf(b.id),
+  );
+
+  const moveCat = (id: number, dir: -1 | 1) => {
+    const arr = [...catOrder];
+    const i   = arr.indexOf(id);
+    const j   = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setCatOrder(arr);
+    localStorage.setItem("cat-order", JSON.stringify(arr));
+  };
+
+  const confirmDeleteCat = () => {
+    if (!catToDelete) return;
+    deleteCat({ id: catToDelete.id });
+    setCatToDelete(null);
+    setActiveCategory("all");
+  };
 
   /* forms */
   const taskForm = useForm<z.infer<typeof taskSchema>>({
@@ -171,13 +215,25 @@ export default function Tasks() {
             <p className="text-muted-foreground mt-1">{pendingFor("all")} remaining</p>
           </div>
 
-          {/* New Task dialog */}
-          <Dialog open={isTaskOpen} onOpenChange={setIsTaskOpen}>
-            <DialogTrigger asChild>
-              <Button className="hover-elevate active-elevate-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 border-0">
-                <Plus className="w-4 h-4 mr-2" />New Task
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            {/* Category settings button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Manage categories"
+              className="border-border/50 hover:border-primary/40 hover:text-primary"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+
+            {/* New Task dialog */}
+            <Dialog open={isTaskOpen} onOpenChange={setIsTaskOpen}>
+              <DialogTrigger asChild>
+                <Button className="hover-elevate active-elevate-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 border-0">
+                  <Plus className="w-4 h-4 mr-2" />New Task
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[440px] bg-card border-border/50 shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="font-display">Create New Task</DialogTitle>
@@ -254,8 +310,9 @@ export default function Tasks() {
                 </form>
               </Form>
             </DialogContent>
-          </Dialog>
-        </div>
+            </Dialog>
+          </div>{/* end buttons flex */}
+        </div>{/* end header */}
 
         {/* ── Category Tabs ── */}
         <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
@@ -273,39 +330,28 @@ export default function Tasks() {
           </button>
 
           {/* Dynamic category tabs */}
-          {!loadingCats && categories.map(cat => {
+          {!loadingCats && sortedCategories.map(cat => {
             const col   = getColor(cat.color);
             const Icon  = getIcon(cat.icon);
             const isAct = activeCategory === cat.name;
             return (
-              <div key={cat.id} className="relative group/tab flex items-center">
-                <button
-                  onClick={() => setActiveCategory(cat.name)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all duration-200 pr-8
-                    ${isAct
-                      ? `${col.bg} ${col.text} border-current/20 shadow-sm`
-                      : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"
-                    }
-                  `}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {cat.name}
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold
-                    ${isAct ? "bg-black/10 dark:bg-white/10" : "bg-muted text-muted-foreground"}`}>
-                    {countFor(cat.name)}
-                  </span>
-                </button>
-
-                {/* Delete button for all categories */}
-                <button
-                  onClick={() => deleteCat({ id: cat.id })}
-                  title="Remove category"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center
-                    text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.name)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all duration-200
+                  ${isAct
+                    ? `${col.bg} ${col.text} border-current/20 shadow-sm`
+                    : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"
+                  }
+                `}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {cat.name}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold
+                  ${isAct ? "bg-black/10 dark:bg-white/10" : "bg-muted text-muted-foreground"}`}>
+                  {countFor(cat.name)}
+                </span>
+              </button>
             );
           })}
 
@@ -493,6 +539,90 @@ export default function Tasks() {
           )}
         </div>
       </div>
+
+      {/* ── Manage Categories Dialog ── */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="sm:max-w-[420px] bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Settings className="w-4 h-4" /> Manage Categories
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground -mt-1">
+            Reorder or remove categories. Removing a category also deletes its tasks.
+          </p>
+          <div className="space-y-2 mt-2 max-h-80 overflow-y-auto pr-1">
+            {sortedCategories.map((cat, idx) => {
+              const col  = getColor(cat.color);
+              const Icon = getIcon(cat.icon);
+              return (
+                <div
+                  key={cat.id}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-background/50"
+                >
+                  {/* Color dot + icon + name */}
+                  <span className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${col.bg} ${col.text}`}>
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <span className="flex-1 font-medium text-sm">{cat.name}</span>
+                  <span className="text-xs text-muted-foreground mr-1">{countFor(cat.name)} tasks</span>
+
+                  {/* Up / Down */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveCat(cat.id, -1)}
+                      disabled={idx === 0}
+                      className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveCat(cat.id, 1)}
+                      disabled={idx === sortedCategories.length - 1}
+                      className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => setCatToDelete({ id: cat.id, name: cat.name })}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ml-1"
+                    title="Remove category"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirmation AlertDialog ── */}
+      <AlertDialog open={!!catToDelete} onOpenChange={open => { if (!open) setCatToDelete(null); }}>
+        <AlertDialogContent className="bg-card border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove "{catToDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the <span className="font-semibold text-foreground">{catToDelete?.name}</span> category
+              and all <span className="font-semibold text-foreground">{catToDelete ? countFor(catToDelete.name) : 0} task(s)</span> inside it.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCat}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, remove it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </Layout>
   );
 }

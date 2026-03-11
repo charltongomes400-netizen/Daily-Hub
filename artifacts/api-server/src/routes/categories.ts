@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { categoriesTable } from "@workspace/db/schema";
+import { categoriesTable, tasksTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -46,6 +46,7 @@ router.delete("/:id", async (req, res) => {
     res.status(404).json({ error: "Category not found" });
     return;
   }
+  await db.delete(tasksTable).where(eq(tasksTable.category, cat.name));
   await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
   res.status(204).send();
 });

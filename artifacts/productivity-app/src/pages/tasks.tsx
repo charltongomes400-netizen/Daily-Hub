@@ -13,7 +13,7 @@ import {
   Tv2, Home, Briefcase, Monitor, Tag, Music, BookOpen, Heart,
   Star, Zap, Coffee, Globe, LayoutGrid, Settings, ChevronUp, ChevronDown,
 } from "lucide-react";
-import { format, isAfter } from "date-fns";
+import { format, isAfter, isBefore, addDays, startOfDay } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -82,7 +82,7 @@ const catSchema = z.object({
   icon:  z.string().min(1),
 });
 
-type StatusFilter = "all" | "pending" | "active" | "completed";
+type StatusFilter = "all" | "due-soon" | "active" | "completed";
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Tasks() {
@@ -183,15 +183,22 @@ export default function Tasks() {
   };
 
   /* derived */
+  const dueSoonCutoff = addDays(startOfDay(new Date()), 7);
+  const isDueSoon = (t: typeof tasks[number]) =>
+    !t.completed && !!t.deadline && isBefore(new Date(t.deadline), dueSoonCutoff);
+
   const filteredTasks = tasks
     .filter(t => activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))
     .filter(t => {
-      if (statusFilter === "pending")   return !t.completed;
+      if (statusFilter === "due-soon")  return isDueSoon(t);
       if (statusFilter === "active")    return !t.completed;
       if (statusFilter === "completed") return t.completed;
       return true;
     })
     .sort((a, b) => {
+      if (statusFilter === "due-soon") {
+        return new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime();
+      }
       if (a.completed !== b.completed) return a.completed ? 1 : -1;
       const pMap = { high: 3, medium: 2, low: 1 };
       return (pMap[b.priority as keyof typeof pMap] ?? 0) - (pMap[a.priority as keyof typeof pMap] ?? 0);
@@ -454,36 +461,47 @@ export default function Tasks() {
         </div>
 
         {/* ── Status filter ── */}
-        <div className="flex gap-1 mb-6 p-1 bg-secondary/50 rounded-xl w-fit">
-          {([
-            { key: "all",       label: "All",       count: tasks.filter(t => activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory)).length },
-            { key: "pending",   label: "Pending",   count: tasks.filter(t => !t.completed && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
-            { key: "active",    label: "Active",    count: tasks.filter(t => !t.completed && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
-            { key: "completed", label: "Completed", count: tasks.filter(t => t.completed  && (activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory))).length },
-          ] as const).map(({ key, label, count }) => (
-            <button
-              key={key}
-              onClick={() => setStatusFilter(key)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all
-                ${statusFilter === key
-                  ? key === "pending"
-                    ? "bg-amber-500/15 text-amber-400 shadow-sm"
-                    : "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}
-            >
-              {label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums ${
-                statusFilter === key
-                  ? key === "pending"
-                    ? "bg-amber-500/20 text-amber-400"
-                    : "bg-muted text-muted-foreground"
-                  : "bg-background/60 text-muted-foreground"
-              }`}>
-                {count}
-              </span>
-            </button>
-          ))}
-        </div>
+        {(() => {
+          const catFilter = (t: typeof tasks[number]) =>
+            activeCategory === "all" || t.category === (categories.find(c => c.name === activeCategory)?.name ?? activeCategory);
+          const tabs = [
+            { key: "all"       as const, label: "All",      count: tasks.filter(catFilter).length },
+            { key: "due-soon"  as const, label: "Due Soon", count: tasks.filter(t => catFilter(t) && isDueSoon(t)).length },
+            { key: "active"    as const, label: "Active",   count: tasks.filter(t => catFilter(t) && !t.completed).length },
+            { key: "completed" as const, label: "Completed",count: tasks.filter(t => catFilter(t) && t.completed).length },
+          ];
+          return (
+            <div className="flex gap-1 mb-6 p-1 bg-secondary/50 rounded-xl w-fit">
+              {tabs.map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setStatusFilter(key)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all
+                    ${statusFilter === key
+                      ? key === "due-soon"
+                        ? "bg-orange-500/15 text-orange-400 shadow-sm"
+                        : "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"}`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold tabular-nums ${
+                      statusFilter === key
+                        ? key === "due-soon"
+                          ? "bg-orange-500/20 text-orange-400"
+                          : "bg-muted text-muted-foreground"
+                        : key === "due-soon" && count > 0
+                          ? "bg-orange-500/10 text-orange-400/80"
+                          : "bg-background/60 text-muted-foreground"
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* ── Task list ── */}
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -494,9 +512,13 @@ export default function Tasks() {
           ) : filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <CheckCircle2 className="w-16 h-16 opacity-20 mb-4" />
-              <p className="text-lg font-medium">No tasks here</p>
+              <p className="text-lg font-medium">
+                {statusFilter === "due-soon" ? "Nothing due soon" : "No tasks here"}
+              </p>
               <p className="text-sm opacity-60 mt-1">
-                {activeCategory !== "all" ? `Add a task to ${activeCategory}` : "All caught up!"}
+                {statusFilter === "due-soon"
+                  ? "No deadlines approaching in the next 7 days."
+                  : activeCategory !== "all" ? `Add a task to ${activeCategory}` : "All caught up!"}
               </p>
             </div>
           ) : (

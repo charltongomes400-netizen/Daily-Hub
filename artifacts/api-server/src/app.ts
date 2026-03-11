@@ -3,6 +3,7 @@ import cors from "cors";
 import session from "express-session";
 import passport from "passport";
 import connectPg from "connect-pg-simple";
+import { rateLimit } from "express-rate-limit";
 import router from "./routes";
 
 const PgStore = connectPg(session);
@@ -42,6 +43,39 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 200,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const user = req.user as { id: number } | undefined;
+    return user ? `user-${user.id}` : (req.ip ?? "unknown");
+  },
+  message: { error: "Too many requests, please slow down." },
+  skip: (req) => req.method === "GET",
+});
+
+const writeLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const user = req.user as { id: number } | undefined;
+    return user ? `user-${user.id}` : (req.ip ?? "unknown");
+  },
+  message: { error: "Too many requests, please slow down." },
+});
+
+app.use("/api", apiLimiter);
+app.use("/api", (req, _res, next) => {
+  if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
+    return writeLimiter(req, _res, next);
+  }
+  next();
+});
 
 app.use("/api", router);
 

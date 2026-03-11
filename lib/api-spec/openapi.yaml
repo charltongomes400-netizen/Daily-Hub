@@ -242,6 +242,9 @@ components:
         priority:
           type: string
           enum: [low, medium, high]
+        category:
+          type: string
+          enum: [all, streaming, life, work, tech]
         deadline:
           type: string
           format: date-time
@@ -257,6 +260,7 @@ components:
         - title
         - completed
         - priority
+        - category
         - createdAt
         - updatedAt
 
@@ -271,6 +275,9 @@ components:
         priority:
           type: string
           enum: [low, medium, high]
+        category:
+          type: string
+          enum: [streaming, life, work, tech]
         deadline:
           type: string
           format: date-time
@@ -278,6 +285,7 @@ components:
       required:
         - title
         - priority
+        - category
 
     UpdateTaskRequest:
       type: object
@@ -292,6 +300,9 @@ components:
         priority:
           type: string
           enum: [low, medium, high]
+        category:
+          type: string
+          enum: [streaming, life, work, tech]
         deadline:
           type: string
           format: date-time

@@ -31,6 +31,7 @@ router.post("/", async (req, res) => {
       title: body.title,
       description: body.description ?? null,
       priority: body.priority,
+      category: body.category,
       deadline: body.deadline ? new Date(body.deadline) : null,
       completed: false,
     })
@@ -54,6 +55,7 @@ router.patch("/:id", async (req, res) => {
   if (body.description !== undefined) updateData.description = body.description ?? null;
   if (body.completed !== undefined) updateData.completed = body.completed;
   if (body.priority !== undefined) updateData.priority = body.priority;
+  if (body.category !== undefined) updateData.category = body.category;
   if (body.deadline !== undefined) updateData.deadline = body.deadline ? new Date(body.deadline) : null;
 
   const [task] = await db

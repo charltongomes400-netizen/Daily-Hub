@@ -24,6 +24,7 @@ export const GetTasksResponseItem = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean(),
   priority: zod.enum(["low", "medium", "high"]),
+  category: zod.enum(["all", "streaming", "life", "work", "tech"]),
   deadline: zod.date().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
@@ -37,6 +38,7 @@ export const CreateTaskBody = zod.object({
   title: zod.string(),
   description: zod.string().nullish(),
   priority: zod.enum(["low", "medium", "high"]),
+  category: zod.enum(["streaming", "life", "work", "tech"]),
   deadline: zod.date().nullish(),
 });
 
@@ -52,6 +54,7 @@ export const UpdateTaskBody = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean().optional(),
   priority: zod.enum(["low", "medium", "high"]).optional(),
+  category: zod.enum(["streaming", "life", "work", "tech"]).optional(),
   deadline: zod.date().nullish(),
 });
 
@@ -61,6 +64,7 @@ export const UpdateTaskResponse = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean(),
   priority: zod.enum(["low", "medium", "high"]),
+  category: zod.enum(["all", "streaming", "life", "work", "tech"]),
   deadline: zod.date().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),

@@ -17,12 +17,23 @@ export const TaskPriority = {
   high: "high",
 } as const;
 
+export type TaskCategory = (typeof TaskCategory)[keyof typeof TaskCategory];
+
+export const TaskCategory = {
+  all: "all",
+  streaming: "streaming",
+  life: "life",
+  work: "work",
+  tech: "tech",
+} as const;
+
 export interface Task {
   id: number;
   title: string;
   description?: string | null;
   completed: boolean;
   priority: TaskPriority;
+  category: TaskCategory;
   deadline?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -37,10 +48,21 @@ export const CreateTaskRequestPriority = {
   high: "high",
 } as const;
 
+export type CreateTaskRequestCategory =
+  (typeof CreateTaskRequestCategory)[keyof typeof CreateTaskRequestCategory];
+
+export const CreateTaskRequestCategory = {
+  streaming: "streaming",
+  life: "life",
+  work: "work",
+  tech: "tech",
+} as const;
+
 export interface CreateTaskRequest {
   title: string;
   description?: string | null;
   priority: CreateTaskRequestPriority;
+  category: CreateTaskRequestCategory;
   deadline?: string | null;
 }
 
@@ -53,11 +75,22 @@ export const UpdateTaskRequestPriority = {
   high: "high",
 } as const;
 
+export type UpdateTaskRequestCategory =
+  (typeof UpdateTaskRequestCategory)[keyof typeof UpdateTaskRequestCategory];
+
+export const UpdateTaskRequestCategory = {
+  streaming: "streaming",
+  life: "life",
+  work: "work",
+  tech: "tech",
+} as const;
+
 export interface UpdateTaskRequest {
   title?: string;
   description?: string | null;
   completed?: boolean;
   priority?: UpdateTaskRequestPriority;
+  category?: UpdateTaskRequestCategory;
   deadline?: string | null;
 }
 

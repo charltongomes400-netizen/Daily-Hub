@@ -8,6 +8,7 @@ export const tasksTable = pgTable("tasks", {
   description: text("description"),
   completed: boolean("completed").notNull().default(false),
   priority: text("priority").notNull().default("medium"),
+  category: text("category").notNull().default("life"),
   deadline: timestamp("deadline"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

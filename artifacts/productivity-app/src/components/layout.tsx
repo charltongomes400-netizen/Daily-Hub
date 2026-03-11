@@ -7,12 +7,12 @@ import {
 } from "lucide-react";
 
 const APPS = [
-  { title: "Dashboard", url: "/",       icon: LayoutDashboard, gradient: "from-violet-500/20 to-violet-600/5",  accent: "text-violet-400",  border: "border-violet-500/20",  ring: "ring-violet-400/40"  },
-  { title: "Tasks",     url: "/tasks",   icon: CheckCircle2,    gradient: "from-blue-500/20 to-blue-600/5",     accent: "text-blue-400",    border: "border-blue-500/20",    ring: "ring-blue-400/40"    },
-  { title: "Finance",   url: "/finance", icon: Wallet,          gradient: "from-emerald-500/20 to-emerald-600/5", accent: "text-emerald-400", border: "border-emerald-500/20", ring: "ring-emerald-400/40" },
-  { title: "Gym",       url: "/gym",     icon: Dumbbell,        gradient: "from-orange-500/20 to-orange-600/5", accent: "text-orange-400",  border: "border-orange-500/20",  ring: "ring-orange-400/40"  },
-  { title: "Goals",     url: "/goals",   icon: Target,          gradient: "from-pink-500/20 to-pink-600/5",     accent: "text-pink-400",    border: "border-pink-500/20",    ring: "ring-pink-400/40"    },
-  { title: "Notes",     url: "/notes",   icon: StickyNote,      gradient: "from-amber-500/20 to-amber-600/5",   accent: "text-amber-400",   border: "border-amber-500/20",   ring: "ring-amber-400/40"   },
+  { title: "Dashboard", url: "/",       icon: LayoutDashboard, gradient: "from-violet-500/20 to-violet-600/5",  accent: "text-violet-400",  bg: "bg-violet-500/12",   border: "border-violet-500/20",  ring: "ring-violet-400/40",  glow: "shadow-violet-500/10" },
+  { title: "Tasks",     url: "/tasks",   icon: CheckCircle2,    gradient: "from-blue-500/20 to-blue-600/5",     accent: "text-blue-400",    bg: "bg-blue-500/12",     border: "border-blue-500/20",    ring: "ring-blue-400/40",    glow: "shadow-blue-500/10"   },
+  { title: "Finance",   url: "/finance", icon: Wallet,          gradient: "from-emerald-500/20 to-emerald-600/5", accent: "text-emerald-400", bg: "bg-emerald-500/12", border: "border-emerald-500/20", ring: "ring-emerald-400/40", glow: "shadow-emerald-500/10" },
+  { title: "Gym",       url: "/gym",     icon: Dumbbell,        gradient: "from-orange-500/20 to-orange-600/5", accent: "text-orange-400",  bg: "bg-orange-500/12",   border: "border-orange-500/20",  ring: "ring-orange-400/40",  glow: "shadow-orange-500/10" },
+  { title: "Goals",     url: "/goals",   icon: Target,          gradient: "from-pink-500/20 to-pink-600/5",     accent: "text-pink-400",    bg: "bg-pink-500/12",     border: "border-pink-500/20",    ring: "ring-pink-400/40",    glow: "shadow-pink-500/10"   },
+  { title: "Notes",     url: "/notes",   icon: StickyNote,      gradient: "from-amber-500/20 to-amber-600/5",   accent: "text-amber-400",   bg: "bg-amber-500/12",    border: "border-amber-500/20",   ring: "ring-amber-400/40",   glow: "shadow-amber-500/10"  },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -32,44 +32,91 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background overflow-hidden relative">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-background overflow-hidden relative">
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[140px] pointer-events-none" />
 
-      {/* ── Header ── */}
-      <header className="flex items-center h-14 md:h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-            <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
-          </div>
-          <span className="font-display font-bold text-foreground hidden sm:block text-sm">
-            Productivity Hub
-          </span>
-        </Link>
-
-        <div className="flex-1 flex items-center justify-center">
-          {currentApp && (
-            <span className="text-sm font-semibold text-foreground/80 tracking-wide">
-              {currentApp.title}
+      {/* ── Desktop Sidebar (lg+) ── */}
+      <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-border/50 bg-background/60 backdrop-blur-md z-20 relative">
+        <div className="p-5 pb-3">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
+              <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
+            </div>
+            <span className="font-display font-bold text-foreground text-sm leading-tight">
+              Productivity<br />Hub
             </span>
-          )}
+          </Link>
         </div>
 
-        <button
-          onClick={() => setLauncherOpen(true)}
-          aria-label="Open app launcher"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
-        >
-          <LayoutGrid className="w-4 h-4" />
-        </button>
-      </header>
+        <nav className="flex-1 px-3 py-2 space-y-1.5">
+          {APPS.map(app => {
+            const isActive = app.url === location || (app.url !== "/" && location.startsWith(app.url));
+            return (
+              <Link key={app.url} href={app.url}>
+                <div
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer
+                    transition-all duration-200 select-none group relative
+                    ${isActive
+                      ? `bg-gradient-to-r ${app.gradient} ${app.border} border shadow-md ${app.glow}`
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent"
+                    }
+                  `}
+                >
+                  {isActive && (
+                    <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full ${app.bg} ${app.accent}`}
+                      style={{ background: "currentColor", opacity: 0.7 }}
+                    />
+                  )}
+                  <app.icon className={`w-5 h-5 shrink-0 ${isActive ? app.accent : "group-hover:text-foreground"}`} />
+                  <span className={`font-semibold text-sm ${isActive ? "text-foreground" : ""}`}>
+                    {app.title}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
 
-      {/* ── Page content ── */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-10">
-        {children}
-      </main>
+      {/* ── Main content column ── */}
+      <div className="flex flex-col flex-1 min-w-0 z-10 relative">
+        {/* ── Header ── */}
+        <header className="flex items-center h-14 md:h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 group lg:hidden">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
+              <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
+            </div>
+            <span className="font-display font-bold text-foreground hidden sm:block text-sm">
+              Productivity Hub
+            </span>
+          </Link>
 
-      {/* ── App Launcher Overlay ── */}
+          <div className="flex-1 flex items-center justify-center lg:justify-start lg:pl-2">
+            {currentApp && (
+              <span className="text-sm font-semibold text-foreground/80 tracking-wide lg:text-base">
+                {currentApp.title}
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => setLauncherOpen(true)}
+            aria-label="Open app launcher"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+        </header>
+
+        {/* ── Page content ── */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
+          {children}
+        </main>
+      </div>
+
+      {/* ── Mobile App Launcher Overlay (< lg only) ── */}
       <AnimatePresence>
         {launcherOpen && (
           <motion.div
@@ -78,9 +125,8 @@ export function Layout({ children }: { children: ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-50 bg-background/96 backdrop-blur-2xl flex flex-col"
+            className="fixed inset-0 z-50 bg-background/96 backdrop-blur-2xl flex flex-col lg:hidden"
           >
-            {/* Launcher header */}
             <div className="flex items-center justify-between px-5 py-5 pb-3 border-b border-border/30">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
@@ -99,7 +145,6 @@ export function Layout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            {/* App grid */}
             <div className="flex-1 overflow-y-auto px-5 pt-5 pb-8">
               <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto sm:max-w-lg sm:grid-cols-3">
                 {APPS.map((app, i) => {

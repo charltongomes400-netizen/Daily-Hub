@@ -114,9 +114,9 @@ export const GetExpensesResponseItem = zod.object({
   title: zod.string(),
   amount: zod.number(),
   category: zod.string(),
-  date: zod.date(),
+  date: zod.string(),
   notes: zod.string().nullish(),
-  createdAt: zod.date(),
+  createdAt: zod.string(),
 });
 export const GetExpensesResponse = zod.array(GetExpensesResponseItem);
 
@@ -127,7 +127,7 @@ export const CreateExpenseBody = zod.object({
   title: zod.string(),
   amount: zod.number(),
   category: zod.string(),
-  date: zod.date(),
+  date: zod.string(),
   notes: zod.string().nullish(),
 });
 
@@ -147,10 +147,10 @@ export const GetSubscriptionsResponseItem = zod.object({
   amount: zod.number(),
   billingCycle: zod.enum(["monthly", "quarterly", "yearly"]),
   category: zod.string(),
-  nextBillingDate: zod.date(),
+  nextBillingDate: zod.string(),
   isActive: zod.boolean(),
   notes: zod.string().nullish(),
-  createdAt: zod.date(),
+  createdAt: zod.string(),
 });
 export const GetSubscriptionsResponse = zod.array(GetSubscriptionsResponseItem);
 
@@ -162,7 +162,7 @@ export const CreateSubscriptionBody = zod.object({
   amount: zod.number(),
   billingCycle: zod.enum(["monthly", "quarterly", "yearly"]),
   category: zod.string(),
-  nextBillingDate: zod.date(),
+  nextBillingDate: zod.string(),
   notes: zod.string().nullish(),
 });
 
@@ -178,7 +178,7 @@ export const UpdateSubscriptionBody = zod.object({
   amount: zod.number().optional(),
   billingCycle: zod.enum(["monthly", "quarterly", "yearly"]).optional(),
   category: zod.string().optional(),
-  nextBillingDate: zod.date().optional(),
+  nextBillingDate: zod.string().optional(),
   isActive: zod.boolean().optional(),
   notes: zod.string().nullish(),
 });
@@ -189,10 +189,10 @@ export const UpdateSubscriptionResponse = zod.object({
   amount: zod.number(),
   billingCycle: zod.enum(["monthly", "quarterly", "yearly"]),
   category: zod.string(),
-  nextBillingDate: zod.date(),
+  nextBillingDate: zod.string(),
   isActive: zod.boolean(),
   notes: zod.string().nullish(),
-  createdAt: zod.date(),
+  createdAt: zod.string(),
 });
 
 /**

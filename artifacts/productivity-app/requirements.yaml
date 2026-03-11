@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For page transitions, subtle entry animations, and hover effects"
+  "recharts": "For finance and productivity dashboard data visualization"
+  "date-fns": "For elegant date formatting and deadline calculations"
+  "@hookform/resolvers": "For Zod form validation with react-hook-form"
+  "zod": "For strict form schema validation"
+
+images:
+  - path: "artifacts/productivity-app/public/images/hero-abstract.png"
+    description: "Deep dark mode abstract background with subtle glowing cyan and purple gradients, very minimal and professional, tech feel"
+    aspect_ratio: "16:9"
+
+notes:
+  - "Assuming React Query hooks are fully available in @workspace/api-client-react"
+  - "Using wouter for routing"

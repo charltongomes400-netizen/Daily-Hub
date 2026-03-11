@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Productivity Hub"
+version = "1.0.0"
+id = "artifacts/productivity-app"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 21644
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/productivity-app run dev"
+
+[services.env]
+PORT = "21644"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/productivity-app", "run", "build"]
+publicDir = "artifacts/productivity-app/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

@@ -281,12 +281,11 @@ export default function Tasks() {
               <div key={cat.id} className="relative group/tab flex items-center">
                 <button
                   onClick={() => setActiveCategory(cat.name)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all duration-200
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all duration-200 pr-8
                     ${isAct
                       ? `${col.bg} ${col.text} border-current/20 shadow-sm`
                       : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"
                     }
-                    ${!cat.isDefault ? "pr-8" : ""}
                   `}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
@@ -297,17 +296,15 @@ export default function Tasks() {
                   </span>
                 </button>
 
-                {/* Delete button for custom categories */}
-                {!cat.isDefault && (
-                  <button
-                    onClick={() => deleteCat({ id: cat.id })}
-                    title="Remove category"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center
-                      text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
+                {/* Delete button for all categories */}
+                <button
+                  onClick={() => deleteCat({ id: cat.id })}
+                  title="Remove category"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center
+                    text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
             );
           })}

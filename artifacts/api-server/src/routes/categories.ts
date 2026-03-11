@@ -46,10 +46,6 @@ router.delete("/:id", async (req, res) => {
     res.status(404).json({ error: "Category not found" });
     return;
   }
-  if (cat.isDefault) {
-    res.status(403).json({ error: "Cannot delete default categories" });
-    return;
-  }
   await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
   res.status(204).send();
 });

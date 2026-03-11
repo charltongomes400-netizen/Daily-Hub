@@ -11,9 +11,9 @@ router.use(requireAuth);
 
 const CreateGoalBody = z.object({
   title: z.string().min(1),
-  description: z.string().optional(),
-  targetDate: z.string().optional(),
-  category: z.string().optional(),
+  description: z.string().nullable().optional(),
+  targetDate: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
 });
 
 const UpdateGoalBody = z.object({

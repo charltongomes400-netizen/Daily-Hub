@@ -12,11 +12,11 @@ router.use(requireAuth);
 const CreateExerciseBody = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
   name: z.string().min(1),
-  sets: z.number().int().positive().optional(),
-  reps: z.number().int().positive().optional(),
-  weight: z.string().optional(),
-  notes: z.string().optional(),
-  sortOrder: z.number().int().optional(),
+  sets: z.number().int().positive().nullable().optional(),
+  reps: z.number().int().positive().nullable().optional(),
+  weight: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  sortOrder: z.number().int().nullable().optional(),
 });
 
 const UpdateExerciseBody = z.object({

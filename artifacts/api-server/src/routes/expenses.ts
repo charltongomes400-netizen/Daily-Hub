@@ -15,7 +15,7 @@ const CreateExpenseBody = z.object({
   type: z.enum(["expense", "income"]).default("expense"),
   category: z.string().min(1),
   date: z.string().min(1),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });

@@ -13,7 +13,7 @@ const CreateOwedBody = z.object({
   fromName: z.string().min(1),
   amount: z.coerce.number().positive(),
   description: z.string().min(1),
-  dueDate: z.string().optional(),
+  dueDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 

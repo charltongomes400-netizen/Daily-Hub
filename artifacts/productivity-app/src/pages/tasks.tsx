@@ -169,7 +169,7 @@ export default function Tasks() {
       2000,
     );
   useEffect(() => cleanupTaskTimers, [cleanupTaskTimers]);
-  const { mutate: deleteTask  } = useDeleteTask({
+  const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
   });
   const { mutate: createCat,     isPending: isCreatingCat  } = useCreateCategory({
@@ -644,7 +644,7 @@ export default function Tasks() {
                           </div>
                         </div>
 
-                        <Button variant="ghost" size="icon" onClick={() => deleteTask({ id: task.id })}
+                        <Button variant="ghost" size="icon" disabled={isDeletingTask} onClick={() => deleteTask({ id: task.id })}
                           className="opacity-0 group-hover:opacity-100 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all">
                           <Trash2 className="w-4 h-4" />
                         </Button>

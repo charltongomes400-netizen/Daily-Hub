@@ -44,15 +44,17 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+function userKey(req: express.Request): string {
+  const user = req.user as { id: number } | undefined;
+  return user ? `user-${user.id}` : "unauthenticated";
+}
+
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 200,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const user = req.user as { id: number } | undefined;
-    return user ? `user-${user.id}` : (req.ip ?? "unknown");
-  },
+  keyGenerator: userKey,
   message: { error: "Too many requests, please slow down." },
   skip: (req) => req.method === "GET",
 });
@@ -62,10 +64,7 @@ const writeLimiter = rateLimit({
   limit: 30,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const user = req.user as { id: number } | undefined;
-    return user ? `user-${user.id}` : (req.ip ?? "unknown");
-  },
+  keyGenerator: userKey,
   message: { error: "Too many requests, please slow down." },
 });
 

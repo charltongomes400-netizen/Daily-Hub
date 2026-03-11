@@ -205,7 +205,7 @@ export default function Notes() {
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all" onClick={() => handleEditNote(note)}>
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all" onClick={() => deleteMutation.mutate(note.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(note.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>

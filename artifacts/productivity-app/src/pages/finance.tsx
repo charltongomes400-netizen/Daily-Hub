@@ -98,7 +98,7 @@ export default function Finance() {
   const { mutate: createExp, isPending: isCreatingExp } = useCreateExpense({
     mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/expenses"] }); setIsExpOpen(false); expForm.reset(); } }
   });
-  const { mutate: deleteExp } = useDeleteExpense({
+  const { mutate: deleteExp, isPending: isDeletingExp } = useDeleteExpense({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/expenses"] }) }
   });
 
@@ -110,7 +110,7 @@ export default function Finance() {
   const { mutate: updateSub } = useUpdateSubscription({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/subscriptions"] }) }
   });
-  const { mutate: deleteSub } = useDeleteSubscription({
+  const { mutate: deleteSub, isPending: isDeletingSub } = useDeleteSubscription({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/subscriptions"] }) }
   });
 
@@ -319,7 +319,7 @@ export default function Finance() {
                               {isIncome ? "+" : "−"}${exp.amount.toFixed(2)}
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <Button variant="ghost" size="icon" onClick={() => deleteExp({ id: exp.id })} className="text-muted-foreground hover:text-destructive h-8 w-8">
+                              <Button variant="ghost" size="icon" disabled={isDeletingExp} onClick={() => deleteExp({ id: exp.id })} className="text-muted-foreground hover:text-destructive h-8 w-8">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </td>
@@ -426,7 +426,7 @@ export default function Finance() {
                           <RefreshCw className="w-4 h-4 mr-1.5 opacity-70" />
                           <span className={sub.isActive ? 'text-foreground' : ''}>{format(new Date(sub.nextBillingDate), 'MMM dd, yyyy')}</span>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => deleteSub({ id: sub.id })} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Button variant="ghost" size="icon" disabled={isDeletingSub} onClick={() => deleteSub({ id: sub.id })} className="h-8 w-8 text-muted-foreground hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -625,12 +625,13 @@ export default function Finance() {
                                     <Button
                                       variant="ghost" size="sm"
                                       className="h-8 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
+                                      disabled={updateOwedMutation.isPending}
                                       onClick={() => updateOwedMutation.mutate({ id: entry.id, data: { status: "received" } })}
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" />Mark received
                                     </Button>
                                   )}
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteOwedMutation.mutate(entry.id)}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={deleteOwedMutation.isPending} onClick={() => deleteOwedMutation.mutate(entry.id)}>
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>

@@ -1,6 +1,7 @@
 import { useGetTasks, useGetExpenses, useGetSubscriptions } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity } from "lucide-react";
+import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { format, subDays, isAfter } from "date-fns";
 import { motion } from "framer-motion";
@@ -8,10 +9,38 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
+interface GymExercise {
+  id: number;
+  dayOfWeek: number;
+  name: string;
+  sets: number | null;
+  reps: number | null;
+  weight: string | null;
+  notes: string | null;
+}
+
+function getRestDays(): Set<number> {
+  try {
+    const saved = localStorage.getItem("gym-rest-days");
+    if (saved) return new Set(JSON.parse(saved) as number[]);
+  } catch {}
+  return new Set();
+}
+
 export default function Dashboard() {
   const { data: tasks = [], isLoading: loadingTasks } = useGetTasks();
   const { data: expenses = [], isLoading: loadingExpenses } = useGetExpenses();
   const { data: subscriptions = [], isLoading: loadingSubs } = useGetSubscriptions();
+  const { data: gymExercises = [] } = useQuery<GymExercise[]>({
+    queryKey: ["/api/gym"],
+    queryFn: () => fetch("/api/gym").then(r => r.json()),
+  });
+
+  const todayIndex = new Date().getDay();
+  const restDaySet = getRestDays();
+  const isTodayRest = restDaySet.has(todayIndex);
+  const todaysExercises = gymExercises.filter(e => e.dayOfWeek === todayIndex);
+  const weekTrainingDays = Array.from({ length: 7 }, (_, i) => i).filter(i => !restDaySet.has(i) && gymExercises.some(e => e.dayOfWeek === i)).length;
 
   const completedTasks = tasks.filter(t => t.completed).length;
   const totalTasks = tasks.length;
@@ -168,7 +197,7 @@ export default function Dashboard() {
           </motion.div>
         </motion.div>
 
-        <motion.div variants={itemVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-0">
+        <motion.div variants={itemVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-0">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -250,6 +279,79 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Fitness Widget */}
+          <Card className={`backdrop-blur-sm shadow-lg shadow-black/10 flex flex-col overflow-hidden relative group transition-colors ${
+            isTodayRest
+              ? "bg-amber-400/5 border-amber-400/25 hover:border-amber-400/40"
+              : "bg-card/50 border-border/50 hover:border-primary/30"
+          }`}>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              {isTodayRest
+                ? <Moon className="w-24 h-24 text-amber-400" />
+                : <Dumbbell className="w-24 h-24 text-primary" />}
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
+              <div>
+                <CardTitle className="font-display">Today's Workout</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {format(new Date(), 'EEEE')} · {weekTrainingDays} training day{weekTrainingDays !== 1 ? "s" : ""} this week
+                </p>
+              </div>
+              <Link href="/gym">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="flex-1 relative z-10">
+              {isTodayRest ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center mb-3">
+                    <Moon className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <p className="font-semibold text-amber-400">Rest Day</p>
+                  <p className="text-xs text-muted-foreground mt-1">Recovery is part of the plan.</p>
+                </div>
+              ) : todaysExercises.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/60 flex items-center justify-center mb-3">
+                    <Dumbbell className="w-6 h-6 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No workout planned for today.</p>
+                  <Link href="/gym">
+                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Plan your workout →</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2 mt-2">
+                  {todaysExercises.slice(0, 5).map((ex) => (
+                    <div key={ex.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-secondary/50 border border-border/30">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        <span className="font-medium text-sm text-foreground truncate">{ex.name}</span>
+                      </div>
+                      {(ex.sets || ex.reps || ex.weight) && (
+                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                          {ex.sets && ex.reps ? `${ex.sets}×${ex.reps}` : ex.sets ? `${ex.sets} sets` : ex.reps ? `${ex.reps} reps` : ""}
+                          {ex.weight ? ` @ ${ex.weight}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {todaysExercises.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      +{todaysExercises.length - 5} more exercises
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
+                    <Flame className="w-3.5 h-3.5 text-primary" />
+                    {todaysExercises.length} exercise{todaysExercises.length !== 1 ? "s" : ""} planned
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, CheckCircle2, ChevronLeft, ChevronRight,
-  Flame, Trophy, Target, Calendar, Star, RotateCcw,
+  Flame, Trophy, Target, Calendar, Star, RotateCcw, Edit2,
 } from "lucide-react";
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -106,11 +106,12 @@ function ProgressRing({ value, size = 80, stroke = 6 }: { value: number; size?: 
 }
 
 /* ── Goal card ──────────────────────────────────────────────── */
-function GoalCard({ goal, onProgress, onComplete, onDelete }: {
+function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
   goal: Goal;
   onProgress: (id: number, p: number) => void;
   onComplete: (id: number) => void;
   onDelete: (id: number) => void;
+  onEdit: (goal: Goal) => void;
 }) {
   const daysLeft = goal.targetDate
     ? differenceInDays(new Date(goal.targetDate), new Date())
@@ -157,6 +158,9 @@ function GoalCard({ goal, onProgress, onComplete, onDelete }: {
           </div>
         </div>
         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={() => onEdit(goal)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="Edit goal">
+            <Edit2 className="w-4 h-4" />
+          </button>
           <button onClick={() => onComplete(goal.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Mark complete">
             <CheckCircle2 className="w-4 h-4" />
           </button>
@@ -202,6 +206,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete }: {
 export default function Goals() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const { data: goals = [], isLoading } = useQuery({ queryKey: ["/api/goals"], queryFn: fetchGoals });
@@ -223,6 +228,36 @@ export default function Goals() {
     resolver: zodResolver(goalSchema),
     defaultValues: { title: "", description: "", targetDate: "", category: "" },
   });
+
+  const editForm = useForm<z.infer<typeof goalSchema>>({
+    resolver: zodResolver(goalSchema),
+    defaultValues: { title: "", description: "", targetDate: "", category: "" },
+  });
+
+  const handleEditGoal = (goal: Goal) => {
+    setEditingGoal(goal);
+    editForm.reset({
+      title: goal.title,
+      description: goal.description || "",
+      targetDate: goal.targetDate || "",
+      category: goal.category || "",
+    });
+  };
+
+  const handleSaveEdit = (data: z.infer<typeof goalSchema>) => {
+    if (!editingGoal) return;
+    updateMutation.mutate({
+      id: editingGoal.id,
+      data: {
+        ...editingGoal,
+        title: data.title,
+        description: data.description || null,
+        targetDate: data.targetDate ? new Date(data.targetDate).toISOString() : null,
+        category: data.category || null,
+      },
+    });
+    setEditingGoal(null);
+  };
 
   const active    = goals.filter(g => g.status === "active");
   const completed = goals.filter(g => g.status === "completed");
@@ -396,6 +431,7 @@ export default function Goals() {
                       onProgress={(id, p) => updateMutation.mutate({ id, data: { progress: p } })}
                       onComplete={(id) => updateMutation.mutate({ id, data: { status: "completed", progress: 100 } })}
                       onDelete={(id) => deleteMutation.mutate(id)}
+                      onEdit={handleEditGoal}
                     />
                   ))
                 )}
@@ -546,6 +582,54 @@ export default function Goals() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* ── EDIT DIALOG ────────────────────────────────────────────── */}
+        {editingGoal && (
+          <Dialog open={!!editingGoal} onOpenChange={(open) => { if (!open) { setEditingGoal(null); editForm.reset(); } }}>
+            <DialogContent className="bg-card border-border/50 shadow-2xl">
+              <DialogHeader><DialogTitle className="text-xl font-display">Update Goal</DialogTitle></DialogHeader>
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(handleSaveEdit)} className="space-y-4 pt-2">
+                  <FormField control={editForm.control} name="title" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Goal Title</FormLabel>
+                      <FormControl><Input className="bg-background text-base" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={editForm.control} name="description" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Why does this matter? <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                      <FormControl><Input className="bg-background" {...field} /></FormControl>
+                    </FormItem>
+                  )} />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={editForm.control} name="targetDate" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                        <FormControl>
+                          <DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" />
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={editForm.control} name="category" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                        <FormControl><Input className="bg-background" {...field} /></FormControl>
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => { setEditingGoal(null); editForm.reset(); }}>Cancel</Button>
+                    <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={updateMutation.isPending}>
+                      {updateMutation.isPending ? "Saving…" : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </Layout>
   );

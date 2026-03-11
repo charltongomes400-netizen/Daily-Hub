@@ -14,7 +14,7 @@ const CreateOwedBody = z.object({
   amount: z.coerce.number().positive(),
   description: z.string().min(1),
   dueDate: z.string().optional(),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 const UpdateOwedBody = z.object({

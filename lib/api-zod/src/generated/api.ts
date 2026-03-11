@@ -16,6 +16,35 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Get all task categories
+ */
+export const GetCategoriesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  color: zod.string(),
+  icon: zod.string(),
+  isDefault: zod.boolean(),
+  createdAt: zod.date(),
+});
+export const GetCategoriesResponse = zod.array(GetCategoriesResponseItem);
+
+/**
+ * @summary Create a new category
+ */
+export const CreateCategoryBody = zod.object({
+  name: zod.string(),
+  color: zod.string(),
+  icon: zod.string(),
+});
+
+/**
+ * @summary Delete a category
+ */
+export const DeleteCategoryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Get all tasks
  */
 export const GetTasksResponseItem = zod.object({
@@ -24,7 +53,7 @@ export const GetTasksResponseItem = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean(),
   priority: zod.enum(["low", "medium", "high"]),
-  category: zod.enum(["all", "streaming", "life", "work", "tech"]),
+  category: zod.string(),
   deadline: zod.date().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
@@ -38,7 +67,7 @@ export const CreateTaskBody = zod.object({
   title: zod.string(),
   description: zod.string().nullish(),
   priority: zod.enum(["low", "medium", "high"]),
-  category: zod.enum(["streaming", "life", "work", "tech"]),
+  category: zod.string(),
   deadline: zod.date().nullish(),
 });
 
@@ -54,7 +83,7 @@ export const UpdateTaskBody = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean().optional(),
   priority: zod.enum(["low", "medium", "high"]).optional(),
-  category: zod.enum(["streaming", "life", "work", "tech"]).optional(),
+  category: zod.string().optional(),
   deadline: zod.date().nullish(),
 });
 
@@ -64,7 +93,7 @@ export const UpdateTaskResponse = zod.object({
   description: zod.string().nullish(),
   completed: zod.boolean(),
   priority: zod.enum(["low", "medium", "high"]),
-  category: zod.enum(["all", "streaming", "life", "work", "tech"]),
+  category: zod.string(),
   deadline: zod.date().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),

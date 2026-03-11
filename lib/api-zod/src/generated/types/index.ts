@@ -6,11 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./createCategoryRequest";
 export * from "./createExpenseRequest";
 export * from "./createSubscriptionRequest";
 export * from "./createSubscriptionRequestBillingCycle";
 export * from "./createTaskRequest";
-export * from "./createTaskRequestCategory";
 export * from "./createTaskRequestPriority";
 export * from "./expense";
 export * from "./healthStatus";
@@ -22,5 +22,4 @@ export * from "./taskPriority";
 export * from "./updateSubscriptionRequest";
 export * from "./updateSubscriptionRequestBillingCycle";
 export * from "./updateTaskRequest";
-export * from "./updateTaskRequestCategory";
 export * from "./updateTaskRequestPriority";

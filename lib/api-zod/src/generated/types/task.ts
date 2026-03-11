@@ -5,7 +5,6 @@
  * Productivity Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { TaskCategory } from "./taskCategory";
 import type { TaskPriority } from "./taskPriority";
 
 export interface Task {
@@ -14,7 +13,7 @@ export interface Task {
   description?: string | null;
   completed: boolean;
   priority: TaskPriority;
-  category: TaskCategory;
+  category: string;
   deadline?: Date | null;
   createdAt: Date;
   updatedAt: Date;

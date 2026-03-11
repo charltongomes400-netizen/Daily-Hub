@@ -6,11 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface TaskCategory {
-  id: number;
+export interface CreateCategoryRequest {
   name: string;
   color: string;
   icon: string;
-  isDefault: boolean;
-  createdAt: Date;
 }

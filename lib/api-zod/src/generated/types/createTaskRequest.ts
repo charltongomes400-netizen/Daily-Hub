@@ -5,13 +5,12 @@
  * Productivity Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateTaskRequestCategory } from "./createTaskRequestCategory";
 import type { CreateTaskRequestPriority } from "./createTaskRequestPriority";
 
 export interface CreateTaskRequest {
   title: string;
   description?: string | null;
   priority: CreateTaskRequestPriority;
-  category: CreateTaskRequestCategory;
+  category: string;
   deadline?: Date | null;
 }

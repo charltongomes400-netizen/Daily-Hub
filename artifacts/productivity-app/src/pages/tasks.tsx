@@ -11,8 +11,16 @@ import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle,
   Tv2, Home, Briefcase, Monitor, Tag, Music, BookOpen, Heart,
-  Star, Zap, Coffee, Globe, LayoutGrid, Settings, ChevronUp, ChevronDown,
+  Star, Zap, Coffee, Globe, LayoutGrid, Settings, GripVertical,
 } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { format, isAfter, isBefore, addDays, startOfDay } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
@@ -84,6 +92,61 @@ const catSchema = z.object({
 
 type StatusFilter = "all" | "due-soon" | "active" | "completed";
 
+/* ─── Sortable category row (used inside Manage Categories dialog) ─── */
+function SortableCategoryRow({
+  cat, countFor, onDelete,
+}: {
+  cat: { id: number; name: string; color: string; icon: string };
+  countFor: (name: string) => number;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: cat.id });
+
+  const col  = getColor(cat.color);
+  const Icon = getIcon(cat.icon);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center gap-3 p-3 rounded-xl border bg-background/50 select-none transition-shadow ${
+        isDragging
+          ? "border-primary/50 shadow-lg shadow-primary/10 z-50 opacity-90"
+          : "border-border/40"
+      }`}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none p-0.5"
+        tabIndex={-1}
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+
+      {/* Icon */}
+      <span className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${col.bg} ${col.text}`}>
+        <Icon className="w-4 h-4" />
+      </span>
+
+      <span className="flex-1 font-medium text-sm">{cat.name}</span>
+      <span className="text-xs text-muted-foreground mr-1">{countFor(cat.name)} tasks</span>
+
+      {/* Delete */}
+      <button
+        onClick={onDelete}
+        className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+        title="Remove category"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -141,14 +204,16 @@ export default function Tasks() {
     (a, b) => catOrder.indexOf(a.id) - catOrder.indexOf(b.id),
   );
 
-  const moveCat = (id: number, dir: -1 | 1) => {
-    const arr = [...catOrder];
-    const i   = arr.indexOf(id);
-    const j   = i + dir;
-    if (j < 0 || j >= arr.length) return;
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    setCatOrder(arr);
-    localStorage.setItem("cat-order", JSON.stringify(arr));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleCatDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = catOrder.indexOf(active.id as number);
+    const newIdx = catOrder.indexOf(over.id as number);
+    const next   = arrayMove(catOrder, oldIdx, newIdx);
+    setCatOrder(next);
+    localStorage.setItem("cat-order", JSON.stringify(next));
   };
 
   const confirmDeleteCat = () => {
@@ -596,52 +661,23 @@ export default function Tasks() {
           <p className="text-sm text-muted-foreground -mt-1">
             Reorder or remove categories. Removing a category also deletes its tasks.
           </p>
-          <div className="space-y-2 mt-2 max-h-80 overflow-y-auto pr-1">
-            {sortedCategories.map((cat, idx) => {
-              const col  = getColor(cat.color);
-              const Icon = getIcon(cat.icon);
-              return (
-                <div
-                  key={cat.id}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-background/50"
-                >
-                  {/* Color dot + icon + name */}
-                  <span className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${col.bg} ${col.text}`}>
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <span className="flex-1 font-medium text-sm">{cat.name}</span>
-                  <span className="text-xs text-muted-foreground mr-1">{countFor(cat.name)} tasks</span>
-
-                  {/* Up / Down */}
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => moveCat(cat.id, -1)}
-                      disabled={idx === 0}
-                      className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => moveCat(cat.id, 1)}
-                      disabled={idx === sortedCategories.length - 1}
-                      className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => setCatToDelete({ id: cat.id, name: cat.name })}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ml-1"
-                    title="Remove category"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <p className="text-xs text-muted-foreground/60 -mt-1 mb-1 flex items-center gap-1">
+            <GripVertical className="w-3 h-3" /> Drag the handle to reorder
+          </p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatDragEnd}>
+            <SortableContext items={catOrder} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {sortedCategories.map(cat => (
+                  <SortableCategoryRow
+                    key={cat.id}
+                    cat={cat}
+                    countFor={countFor}
+                    onDelete={() => setCatToDelete({ id: cat.id, name: cat.name })}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </DialogContent>
       </Dialog>
 

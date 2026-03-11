@@ -5,6 +5,7 @@ import expensesRouter from "./expenses";
 import subscriptionsRouter from "./subscriptions";
 import categoriesRouter from "./categories";
 import gymRouter from "./gym";
+import owedRouter from "./owed";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use("/tasks", tasksRouter);
 router.use("/expenses", expensesRouter);
 router.use("/subscriptions", subscriptionsRouter);
 router.use("/gym", gymRouter);
+router.use("/owed", owedRouter);
 
 export default router;

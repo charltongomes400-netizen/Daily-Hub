@@ -1,37 +1,151 @@
-import { ReactNode, useEffect } from "react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "./app-sidebar";
+import { ReactNode, useEffect, useState } from "react";
+import { useLocation, Link } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LayoutGrid, X, LayoutDashboard, CheckCircle2, Wallet,
+  Dumbbell, Target, StickyNote,
+} from "lucide-react";
+
+const APPS = [
+  { title: "Dashboard", url: "/",       icon: LayoutDashboard, gradient: "from-violet-500/20 to-violet-600/5",  accent: "text-violet-400",  border: "border-violet-500/20",  ring: "ring-violet-400/40"  },
+  { title: "Tasks",     url: "/tasks",   icon: CheckCircle2,    gradient: "from-blue-500/20 to-blue-600/5",     accent: "text-blue-400",    border: "border-blue-500/20",    ring: "ring-blue-400/40"    },
+  { title: "Finance",   url: "/finance", icon: Wallet,          gradient: "from-emerald-500/20 to-emerald-600/5", accent: "text-emerald-400", border: "border-emerald-500/20", ring: "ring-emerald-400/40" },
+  { title: "Gym",       url: "/gym",     icon: Dumbbell,        gradient: "from-orange-500/20 to-orange-600/5", accent: "text-orange-400",  border: "border-orange-500/20",  ring: "ring-orange-400/40"  },
+  { title: "Goals",     url: "/goals",   icon: Target,          gradient: "from-pink-500/20 to-pink-600/5",     accent: "text-pink-400",    border: "border-pink-500/20",    ring: "ring-pink-400/40"    },
+  { title: "Notes",     url: "/notes",   icon: StickyNote,      gradient: "from-amber-500/20 to-amber-600/5",   accent: "text-amber-400",   border: "border-amber-500/20",   ring: "ring-amber-400/40"   },
+];
 
 export function Layout({ children }: { children: ReactNode }) {
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "4rem",
-  };
+  const [location] = useLocation();
+  const [launcherOpen, setLauncherOpen] = useState(false);
 
   useEffect(() => {
-    // Force dark mode for the premium look
     document.documentElement.classList.add("dark");
   }, []);
 
+  useEffect(() => {
+    setLauncherOpen(false);
+  }, [location]);
+
+  const currentApp = APPS.find(
+    a => a.url === location || (a.url !== "/" && location.startsWith(a.url)),
+  );
+
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background overflow-hidden relative">
-        {/* Subtle background glow effect */}
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-accent/5 blur-[120px] pointer-events-none" />
-        
-        <AppSidebar />
-        <div className="flex flex-col flex-1 min-w-0 z-10 relative">
-          <header className="flex items-center h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
-          </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
-            <div className="h-full w-full">
-              {children}
-            </div>
-          </main>
+    <div className="flex flex-col h-screen w-full bg-background overflow-hidden relative">
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[140px] pointer-events-none" />
+
+      {/* ── Header ── */}
+      <header className="flex items-center h-14 md:h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
+            <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
+          </div>
+          <span className="font-display font-bold text-foreground hidden sm:block text-sm">
+            Productivity Hub
+          </span>
+        </Link>
+
+        <div className="flex-1 flex items-center justify-center">
+          {currentApp && (
+            <span className="text-sm font-semibold text-foreground/80 tracking-wide">
+              {currentApp.title}
+            </span>
+          )}
         </div>
-      </div>
-    </SidebarProvider>
+
+        <button
+          onClick={() => setLauncherOpen(true)}
+          aria-label="Open app launcher"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+        >
+          <LayoutGrid className="w-4 h-4" />
+        </button>
+      </header>
+
+      {/* ── Page content ── */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-10">
+        {children}
+      </main>
+
+      {/* ── App Launcher Overlay ── */}
+      <AnimatePresence>
+        {launcherOpen && (
+          <motion.div
+            key="launcher"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 bg-background/96 backdrop-blur-2xl flex flex-col"
+          >
+            {/* Launcher header */}
+            <div className="flex items-center justify-between px-5 py-5 pb-3 border-b border-border/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                  <span className="text-primary-foreground font-bold text-sm">PH</span>
+                </div>
+                <div>
+                  <p className="font-display font-bold text-base text-foreground leading-tight">Productivity Hub</p>
+                  <p className="text-xs text-muted-foreground">Choose an app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLauncherOpen(false)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* App grid */}
+            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-8">
+              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto sm:max-w-lg sm:grid-cols-3">
+                {APPS.map((app, i) => {
+                  const isActive = app.url === location || (app.url !== "/" && location.startsWith(app.url));
+                  return (
+                    <motion.div
+                      key={app.url}
+                      initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.88 }}
+                      transition={{ delay: i * 0.045, type: "spring", stiffness: 340, damping: 26 }}
+                    >
+                      <Link href={app.url}>
+                        <div
+                          className={`
+                            relative flex flex-col items-center justify-center gap-3
+                            p-5 rounded-2xl border cursor-pointer
+                            bg-gradient-to-br ${app.gradient} ${app.border}
+                            transition-all duration-200 active:scale-95
+                            aspect-square select-none
+                            ${isActive
+                              ? `ring-2 ${app.ring} border-transparent shadow-lg`
+                              : "hover:scale-[1.03] hover:shadow-md hover:border-border/60"}
+                          `}
+                        >
+                          {isActive && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary shadow-sm shadow-primary/50"
+                            />
+                          )}
+                          <app.icon className={`w-7 h-7 sm:w-8 sm:h-8 ${app.accent}`} />
+                          <span className="font-semibold text-xs sm:text-sm text-foreground text-center leading-tight">
+                            {app.title}
+                          </span>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

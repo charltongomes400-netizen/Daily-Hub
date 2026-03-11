@@ -385,7 +385,8 @@ export default function Gym() {
         </div>
 
         {/* Day selector */}
-        <div className="grid grid-cols-7 gap-2 mb-6">
+        <div className="overflow-x-auto -mx-4 px-4 mb-6 pb-1">
+        <div className="grid grid-cols-7 gap-2 min-w-[400px]">
           {DAYS.map((day, i) => {
             const count = exercisesByDay[i].length;
             const isToday = i === todayIndex;
@@ -436,6 +437,7 @@ export default function Gym() {
               </button>
             );
           })}
+        </div>
         </div>
 
         {/* Day detail */}

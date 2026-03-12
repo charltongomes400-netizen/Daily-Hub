@@ -1,6 +1,5 @@
 import { Router } from "express";
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -27,57 +26,6 @@ async function seedDefaultCategories(userId: string) {
       DEFAULT_CATEGORIES.map((c) => ({ ...c, userId }))
     );
   }
-}
-
-const callbackURL = process.env.APP_URL
-  ? `${process.env.APP_URL}/api/auth/google/callback`
-  : `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
-
-const googleCredsConfigured =
-  !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
-
-if (googleCredsConfigured) {
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL,
-      },
-      async (_accessToken, _refreshToken, profile, done) => {
-        try {
-          const email = profile.emails?.[0]?.value ?? "";
-          const avatarUrl = profile.photos?.[0]?.value ?? null;
-
-          const existing = await db
-            .select()
-            .from(usersTable)
-            .where(eq(usersTable.id, profile.id))
-            .limit(1);
-
-          if (existing.length > 0) {
-            const [user] = await db
-              .update(usersTable)
-              .set({ name: profile.displayName, avatarUrl })
-              .where(eq(usersTable.id, profile.id))
-              .returning();
-            return done(null, user);
-          }
-
-          const [user] = await db
-            .insert(usersTable)
-            .values({ id: profile.id, email, name: profile.displayName, avatarUrl })
-            .returning();
-
-          await seedDefaultCategories(user.id);
-
-          done(null, user);
-        } catch (err) {
-          done(err as Error);
-        }
-      }
-    )
-  );
 }
 
 passport.use(
@@ -132,27 +80,6 @@ const registerSchema = z.object({
 });
 
 const router = Router();
-
-if (googleCredsConfigured) {
-  router.get(
-    "/google",
-    passport.authenticate("google", { scope: ["profile", "email"] })
-  );
-
-  router.get(
-    "/google/callback",
-    passport.authenticate("google", { failureRedirect: "/?auth_error=1" }),
-    (_req, res) => {
-      res.redirect("/");
-    }
-  );
-} else {
-  router.get("/google", (_req, res) => {
-    res.status(503).json({
-      error: "Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.",
-    });
-  });
-}
 
 router.post("/register", async (req, res) => {
   try {

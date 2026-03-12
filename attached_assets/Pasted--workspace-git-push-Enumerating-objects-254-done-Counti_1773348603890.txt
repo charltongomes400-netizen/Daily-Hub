@@ -1,0 +1,46 @@
+~/workspace$ git push
+Enumerating objects: 254, done.
+Counting objects: 100% (254/254), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (207/207), done.
+Writing objects: 100% (210/210), 1.17 MiB | 3.49 MiB/s, done.
+Total 210 (delta 157), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (157/157), completed with 31 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/master.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/charltongomes400-netizen/Daily-Hub/settings/security_analysis
+remote:     
+remote:     
+remote:       —— Google OAuth Client ID ————————————————————————————
+remote:        locations:
+remote:          - commit: b3716ef992d4be0284ec9b4ad739651444016e63
+remote:            path: attached_assets/client_secret_262784195839-g0qlca14870rn9vao2647fhgmedqttgq.a_1773266247579.json:1
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/charltongomes400-netizen/Daily-Hub/security/secret-scanning/unblock-secret/3Ar5e29byX4v2qPWNqRIbgTx7LA
+remote:     
+remote:     
+remote:       —— Google OAuth Client Secret ————————————————————————
+remote:        locations:
+remote:          - commit: b3716ef992d4be0284ec9b4ad739651444016e63
+remote:            path: attached_assets/client_secret_262784195839-g0qlca14870rn9vao2647fhgmedqttgq.a_1773266247579.json:1
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/charltongomes400-netizen/Daily-Hub/security/secret-scanning/unblock-secret/3Ar5e1Si4JQwXU5XCrO1DAIZUBe
+remote:     
+remote: 
+remote: 
+To https://github.com/charltongomes400-netizen/Daily-Hub
+ ! [remote rejected] master -> master (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/charltongomes400-netizen/Daily-Hub'

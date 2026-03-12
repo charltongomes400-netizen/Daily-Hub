@@ -73,7 +73,7 @@ app.use("/api", (req, _res, next) => {
   if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
     return writeLimiter(req, _res, next);
   }
-  next();
+  return next();
 });
 
 app.use("/api", router);

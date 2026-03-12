@@ -140,11 +140,11 @@ router.post("/login", (req, res, next) => {
     if (!user) {
       return res.status(401).json({ error: info?.message || "Invalid email or password" });
     }
-    req.login(user, (loginErr) => {
+    return req.login(user, (loginErr) => {
       if (loginErr) {
         return res.status(500).json({ error: "Failed to create session" });
       }
-      res.json({
+      return res.json({
         id: user.id,
         email: user.email,
         name: user.name,

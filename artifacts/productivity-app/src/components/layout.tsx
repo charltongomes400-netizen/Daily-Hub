@@ -226,7 +226,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       initial={{ opacity: 0, scale: 0.88, y: 12 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.88 }}
-                      transition={{ delay: i * 0.045, type: "spring", stiffness: 340, damping: 26 }}
+                      transition={{ delay: i * 0.045, type: "spring" as const, stiffness: 340, damping: 26 }}
                     >
                       <Link href={app.url}>
                         <div

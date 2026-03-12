@@ -47,3 +47,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Never commit credential/secret files from attached assets
+attached_assets/*.json

@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -158,7 +158,6 @@ export default function Dashboard() {
             <div className="flex flex-col items-start sm:items-end shrink-0 pb-1">
               <span className="text-4xl md:text-5xl font-display font-bold tabular-nums tracking-tight text-foreground/90 leading-none">
                 {format(now, 'HH:mm')}
-                <span className="text-2xl md:text-3xl text-muted-foreground/60 font-normal">:{format(now, 'ss')}</span>
               </span>
               <span className="text-sm text-muted-foreground mt-1.5 font-medium">
                 {format(now, 'EEEE, MMMM d, yyyy')}

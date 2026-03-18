@@ -19,7 +19,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+  SortableContext, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { format, isAfter, isBefore, addDays, startOfDay } from "date-fns";
@@ -145,6 +145,44 @@ function SortableCategoryRow({
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
+  );
+}
+
+/* ─── Sortable category tab (for the horizontal tab bar) ─────────── */
+function SortableCategoryTab({
+  cat, isActive, onClick, count,
+}: {
+  cat: { id: number; name: string; color: string; icon: string };
+  isActive: boolean;
+  onClick: () => void;
+  count: number;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: cat.id });
+
+  const col  = getColor(cat.color);
+  const Icon = getIcon(cat.icon);
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-colors duration-200 cursor-grab active:cursor-grabbing select-none touch-none
+        ${isActive
+          ? `${col.bg} ${col.text} border-current/20 shadow-sm`
+          : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"}
+        ${isDragging ? "opacity-40 shadow-xl scale-95 z-50" : ""}`}
+    >
+      <Icon className="w-4 h-4 shrink-0" />
+      {cat.name}
+      <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold
+        ${isActive ? "bg-black/10 dark:bg-white/10" : "bg-muted text-muted-foreground"}`}>
+        {count}
+      </span>
+    </button>
   );
 }
 
@@ -527,31 +565,24 @@ export default function Tasks() {
             <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold bg-muted text-muted-foreground">{countFor("all")}</span>
           </button>
 
-          {/* Dynamic category tabs */}
-          {!loadingCats && sortedCategories.map(cat => {
-            const col   = getColor(cat.color);
-            const Icon  = getIcon(cat.icon);
-            const isAct = activeCategory === cat.name;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.name)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all duration-200
-                  ${isAct
-                    ? `${col.bg} ${col.text} border-current/20 shadow-sm`
-                    : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"
-                  }
-                `}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {cat.name}
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold
-                  ${isAct ? "bg-black/10 dark:bg-white/10" : "bg-muted text-muted-foreground"}`}>
-                  {countFor(cat.name)}
-                </span>
-              </button>
-            );
-          })}
+          {/* Dynamic category tabs — draggable */}
+          {!loadingCats && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatDragEnd}>
+              <SortableContext items={catOrder} strategy={horizontalListSortingStrategy}>
+                <div className="flex items-center gap-2">
+                  {sortedCategories.map(cat => (
+                    <SortableCategoryTab
+                      key={cat.id}
+                      cat={cat}
+                      isActive={activeCategory === cat.name}
+                      onClick={() => setActiveCategory(cat.name)}
+                      count={countFor(cat.name)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
 
           {/* Add Category button */}
           <Dialog open={isCatOpen} onOpenChange={setIsCatOpen}>

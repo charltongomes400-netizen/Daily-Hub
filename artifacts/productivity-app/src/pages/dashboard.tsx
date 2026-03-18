@@ -139,21 +139,21 @@ export default function Dashboard() {
   return (
     <Layout>
       <div
-        className="h-full overflow-hidden grid p-2 gap-2"
+        className="h-full overflow-hidden grid p-3 gap-3"
         style={{ gridTemplateRows: 'auto auto minmax(0,1.3fr) minmax(0,1fr)' }}
       >
-        {/* ── Compact Header ── */}
+        {/* ── Header ── */}
         <motion.div initial="hidden" animate="show" variants={itemVariants}
-          className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm">
+          className="flex items-center justify-between px-6 py-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm">
           <div>
-            <h1 className="text-lg font-display font-bold tracking-tight text-foreground leading-tight">Welcome back.</h1>
-            <p className="text-xs text-muted-foreground">Your productivity &amp; finance overview</p>
+            <h1 className="text-3xl font-display font-bold tracking-tight text-foreground leading-tight">Welcome back.</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Your productivity &amp; finance overview</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-display font-bold tabular-nums tracking-tight text-foreground/90 leading-none">
+            <div className="text-4xl font-display font-bold tabular-nums tracking-tight text-foreground/90 leading-none">
               {format(now, 'HH:mm')}
             </div>
-            <div className="text-xs text-muted-foreground font-medium mt-0.5">
+            <div className="text-sm text-muted-foreground font-medium mt-1">
               {format(now, 'EEEE, MMMM d, yyyy')}
             </div>
           </div>
@@ -161,19 +161,19 @@ export default function Dashboard() {
 
         {/* ── Stat Cards ── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-3 gap-2">
+          className="grid grid-cols-3 gap-3">
           <motion.div variants={itemVariants}>
             <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 overflow-hidden relative group hover:border-blue-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <CheckCircle2 className="w-14 h-14 text-blue-400" />
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-1 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-1 relative z-10">
                 <CardTitle className="text-xs font-medium text-muted-foreground">Task Completion</CardTitle>
-                <Activity className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                <Activity className="h-4 w-4 text-blue-400 shrink-0" />
               </CardHeader>
-              <CardContent className="p-3 pt-0 relative z-10">
-                <div className="text-2xl font-bold font-display text-blue-400">{taskProgress}%</div>
-                <p className="text-xs text-muted-foreground">{completedTasks} of {totalTasks} tasks</p>
+              <CardContent className="p-4 pt-0 relative z-10">
+                <div className="text-3xl font-bold font-display text-blue-400">{taskProgress}%</div>
+                <p className="text-sm text-muted-foreground mt-0.5">{completedTasks} of {totalTasks} tasks</p>
                 {pendingHighPriority > 0 && (
                   <div className="mt-1.5 inline-flex items-center rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
                     {pendingHighPriority} high priority
@@ -187,13 +187,13 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Wallet className="w-14 h-14 text-emerald-400" />
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-1 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-1 relative z-10">
                 <CardTitle className="text-xs font-medium text-muted-foreground">Monthly Expenses</CardTitle>
-                <Wallet className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <Wallet className="h-4 w-4 text-emerald-400 shrink-0" />
               </CardHeader>
-              <CardContent className="p-3 pt-0 relative z-10">
-                <div className="text-2xl font-bold font-display text-emerald-400">${monthlyExpenses.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground">Total in {format(new Date(), 'MMMM')}</p>
+              <CardContent className="p-4 pt-0 relative z-10">
+                <div className="text-3xl font-bold font-display text-emerald-400">${monthlyExpenses.toFixed(2)}</div>
+                <p className="text-sm text-muted-foreground mt-0.5">Total in {format(new Date(), 'MMMM')}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -202,13 +202,13 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <CreditCard className="w-14 h-14 text-yellow-400" />
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-1 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-1 relative z-10">
                 <CardTitle className="text-xs font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-                <CreditCard className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+                <CreditCard className="h-4 w-4 text-yellow-400 shrink-0" />
               </CardHeader>
-              <CardContent className="p-3 pt-0 relative z-10">
-                <div className="text-2xl font-bold font-display text-yellow-400">${activeMonthlySubs.toFixed(2)}<span className="text-sm text-muted-foreground font-normal">/mo</span></div>
-                <p className="text-xs text-muted-foreground">{subscriptions.filter(s => s.isActive).length} active services</p>
+              <CardContent className="p-4 pt-0 relative z-10">
+                <div className="text-3xl font-bold font-display text-yellow-400">${activeMonthlySubs.toFixed(2)}<span className="text-base text-muted-foreground font-normal">/mo</span></div>
+                <p className="text-sm text-muted-foreground mt-0.5">{subscriptions.filter(s => s.isActive).length} active services</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -216,12 +216,12 @@ export default function Dashboard() {
 
         {/* ── Middle Row: Chart · Tasks · Gym ── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-3 gap-2 min-h-0">
+          className="grid grid-cols-3 gap-3 min-h-0">
 
           {/* Upcoming Tasks — blue */}
           <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
             <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:border-blue-400/40 transition-colors flex flex-col h-full overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0">
                 <div>
                   <CardTitle className="font-display text-sm">Upcoming Tasks</CardTitle>
                   <p className="text-xs text-muted-foreground">Pending attention</p>
@@ -232,7 +232,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 overflow-y-auto p-2 pt-1.5">
+              <CardContent className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
                 <div className="space-y-1.5">
                   {tasks.filter(t => !t.completed).sort((a, b) => {
                     if (a.priority === "high" && b.priority !== "high") return -1;
@@ -266,7 +266,7 @@ export default function Dashboard() {
           {/* Recent Expenses — emerald */}
           <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
             <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 hover:border-emerald-400/40 transition-colors flex flex-col h-full overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0">
                 <div>
                   <CardTitle className="font-display text-sm">Recent Expenses</CardTitle>
                   <p className="text-xs text-muted-foreground">Last 7 days</p>
@@ -277,7 +277,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 p-2 pt-1">
+              <CardContent className="flex-1 min-h-0 p-3 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={last7Days} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <defs>
@@ -307,7 +307,7 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 {isTodayRest ? <Moon className="w-14 h-14 text-orange-400" /> : <Dumbbell className="w-14 h-14 text-orange-400" />}
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0 relative z-10">
                 <div>
                   <CardTitle className="font-display text-sm">Today's Workout</CardTitle>
                   <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE')} · {weekTrainingDays} day{weekTrainingDays !== 1 ? "s" : ""}/week</p>
@@ -318,7 +318,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 overflow-y-auto p-2 pt-1.5 relative z-10">
+              <CardContent className="flex-1 min-h-0 overflow-y-auto p-3 pt-0 relative z-10">
                 {isTodayRest ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <div className="w-10 h-10 rounded-2xl bg-orange-400/10 flex items-center justify-center mb-2">
@@ -367,7 +367,7 @@ export default function Dashboard() {
 
         {/* ── Bottom Row: Notes · Goals ── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-2 gap-2 min-h-0">
+          className="grid grid-cols-2 gap-3 min-h-0">
 
           {/* Latest Note — amber */}
           <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
@@ -375,7 +375,7 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <StickyNote className="w-14 h-14 text-amber-400" />
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0 relative z-10">
                 <div>
                   <CardTitle className="font-display text-sm">Latest Note</CardTitle>
                   <p className="text-xs text-muted-foreground">{notes.length} note{notes.length !== 1 ? "s" : ""} saved</p>
@@ -386,7 +386,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 overflow-hidden p-2 pt-1.5 relative z-10">
+              <CardContent className="flex-1 min-h-0 overflow-hidden p-3 pt-0 relative z-10">
                 {!latestNote ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center mb-2">
@@ -417,7 +417,7 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Target className="w-14 h-14 text-pink-400" />
               </div>
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0 relative z-10">
+              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0 relative z-10">
                 <div>
                   <CardTitle className="font-display text-sm">Goals</CardTitle>
                   <p className="text-xs text-muted-foreground">{completedGoals.length} of {goals.length} completed · {goalCompletionPct}%</p>
@@ -428,7 +428,7 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 overflow-y-auto p-2 pt-1.5 relative z-10">
+              <CardContent className="flex-1 min-h-0 overflow-y-auto p-3 pt-0 relative z-10">
                 {goals.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center mb-2">

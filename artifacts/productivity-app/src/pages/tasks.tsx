@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, Calendar as CalendarIcon, CheckCircle2, Circle,
   Tv2, Home, Briefcase, Monitor, Tag, Music, BookOpen, Heart,
-  Star, Zap, Coffee, Globe, LayoutGrid, Settings, GripVertical,
+  Star, Zap, Coffee, Globe, LayoutGrid, Settings, GripVertical, Pencil,
 } from "lucide-react";
 import { useOptimisticDebounce } from "@/hooks/useOptimisticDebounce";
 import {
@@ -192,6 +192,7 @@ export default function Tasks() {
   const [showInlineCat,    setShowInlineCat]    = useState(false);
   const [inlineCatName,    setInlineCatName]    = useState("");
   const [inlineCatColor,   setInlineCatColor]   = useState("blue");
+  const [editingTask,      setEditingTask]      = useState<typeof tasks[number] | null>(null);
   const [catToDelete,      setCatToDelete]      = useState<{ id: number; name: string } | null>(null);
   const [catOrder,         setCatOrder]         = useState<number[]>(() => {
     try { return JSON.parse(localStorage.getItem("cat-order") ?? "[]"); } catch { return []; }
@@ -238,6 +239,10 @@ export default function Tasks() {
     resolver: zodResolver(taskSchema),
     defaultValues: { title: "", description: "", priority: "medium", category: "", deadline: "" },
   });
+  const editTaskForm = useForm<z.infer<typeof taskSchema>>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: { title: "", description: "", priority: "medium", category: "", deadline: "" },
+  });
   const catForm = useForm<z.infer<typeof catSchema>>({
     resolver: zodResolver(catSchema),
     defaultValues: { name: "", color: "blue", icon: "tag" },
@@ -255,6 +260,29 @@ export default function Tasks() {
   };
   const onSubmitCat = (data: z.infer<typeof catSchema>) => {
     createCat({ data: { name: data.name, color: data.color, icon: data.icon } });
+  };
+
+  const onSubmitEditTask = (data: z.infer<typeof taskSchema>) => {
+    if (!editingTask) return;
+    updateTask({ id: editingTask.id, data: {
+      title: data.title,
+      description: data.description || undefined,
+      priority: data.priority,
+      category: data.category,
+      deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
+    }});
+    setEditingTask(null);
+  };
+
+  const openEditTask = (task: typeof tasks[number]) => {
+    editTaskForm.reset({
+      title: task.title,
+      description: task.description ?? "",
+      priority: task.priority as "low" | "medium" | "high",
+      category: task.category,
+      deadline: task.deadline ? format(new Date(task.deadline), "yyyy-MM-dd") : "",
+    });
+    setEditingTask(task);
   };
 
   const handleInlineCatCreate = () => {
@@ -730,10 +758,16 @@ export default function Tasks() {
                           </div>
                         </div>
 
-                        <Button variant="ghost" size="icon" disabled={isDeletingTask} onClick={() => deleteTask({ id: task.id })}
-                          className="opacity-0 group-hover:opacity-100 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                          <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" disabled={isDeletingTask} onClick={() => deleteTask({ id: task.id })}
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </Card>
                     </motion.div>
                   );
@@ -797,6 +831,93 @@ export default function Tasks() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Edit Task Dialog ── */}
+      <Dialog open={!!editingTask} onOpenChange={open => { if (!open) setEditingTask(null); }}>
+        <DialogContent className="sm:max-w-[440px] bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Pencil className="w-4 h-4" /> Edit Task
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...editTaskForm}>
+            <form onSubmit={editTaskForm.handleSubmit(onSubmitEditTask)} className="space-y-4 mt-4">
+              <FormField control={editTaskForm.control} name="title" render={({ field }) => (
+                <FormItem><FormLabel>Title</FormLabel>
+                  <FormControl><Input placeholder="What needs to be done?" className="bg-background" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={editTaskForm.control} name="description" render={({ field }) => (
+                <FormItem><FormLabel>Description (Optional)</FormLabel>
+                  <FormControl><Textarea placeholder="Add some details..." className="bg-background resize-none" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={editTaskForm.control} name="category" render={({ field }) => (
+                  <FormItem><FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-background"><SelectValue placeholder="Pick category" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map(c => {
+                          const col = getColor(c.color);
+                          const Icon = getIcon(c.icon);
+                          return (
+                            <SelectItem key={c.id} value={c.name}>
+                              <span className="flex items-center gap-2">
+                                <Icon className={`w-3.5 h-3.5 ${col.text}`} />
+                                {c.name}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={editTaskForm.control} name="priority" render={({ field }) => (
+                  <FormItem><FormLabel>Priority</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+
+              <FormField control={editTaskForm.control} name="deadline" render={({ field }) => (
+                <FormItem><FormLabel>Deadline (Optional)</FormLabel>
+                  <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingTask(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1 hover-elevate">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
     </Layout>
   );

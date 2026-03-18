@@ -37,7 +37,7 @@ import {
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 /* ─── Icon map ─────────────────────────────────────────────────────── */
@@ -364,18 +364,18 @@ export default function Tasks() {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={taskForm.control} name="category" render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel>Category</FormLabel>
-                          <button
-                            type="button"
-                            onClick={() => setShowInlineCat(!showInlineCat)}
-                            className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                            {showInlineCat ? "Cancel" : "New"}
-                          </button>
-                        </div>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={(val) => {
+                            if (val === "__new__") {
+                              setShowInlineCat(true);
+                            } else {
+                              field.onChange(val);
+                              setShowInlineCat(false);
+                            }
+                          }}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger className="bg-background"><SelectValue placeholder="Pick category" /></SelectTrigger>
                           </FormControl>
@@ -392,11 +392,27 @@ export default function Tasks() {
                                 </SelectItem>
                               );
                             })}
+                            <SelectSeparator />
+                            <SelectItem value="__new__">
+                              <span className="flex items-center gap-2 text-muted-foreground">
+                                <Plus className="w-3.5 h-3.5" />
+                                New category
+                              </span>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         {showInlineCat && (
                           <div className="mt-1 p-3 rounded-xl border border-border/50 bg-background space-y-2.5">
-                            <p className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">Quick Create</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">New Category</p>
+                              <button
+                                type="button"
+                                onClick={() => { setShowInlineCat(false); setInlineCatName(""); setInlineCatColor("blue"); }}
+                                className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                              >
+                                <span className="text-xs">✕</span>
+                              </button>
+                            </div>
                             <Input
                               value={inlineCatName}
                               onChange={e => setInlineCatName(e.target.value)}

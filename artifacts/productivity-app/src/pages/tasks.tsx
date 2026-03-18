@@ -391,12 +391,11 @@ export default function Tasks() {
             {/* Category settings button */}
             <Button
               variant="outline"
-              size="icon"
               onClick={() => setIsSettingsOpen(true)}
-              title="Manage categories"
-              className="border-border/50 hover:border-primary/40 hover:text-primary"
+              className="border-border/50 hover:border-primary/40 hover:text-primary gap-2"
             >
               <Settings className="w-4 h-4" />
+              Manage Categories
             </Button>
 
             {/* New Task dialog */}

@@ -1,5 +1,6 @@
 import { useGetTasks, useGetExpenses, useGetSubscriptions } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
@@ -28,6 +29,13 @@ function getRestDays(): Set<number> {
 }
 
 export default function Dashboard() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const { data: tasks = [], isLoading: loadingTasks } = useGetTasks();
   const { data: expenses = [], isLoading: loadingExpenses } = useGetExpenses();
   const { data: subscriptions = [], isLoading: loadingSubs } = useGetSubscriptions();
@@ -138,13 +146,24 @@ export default function Dashboard() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
-          <div className="pt-12 pb-6 px-4 md:px-8">
-            <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-foreground">
-              Welcome back.
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              Here is your productivity and finance overview.
-            </p>
+          <div className="pt-12 pb-6 px-4 md:px-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-foreground">
+                Welcome back.
+              </h1>
+              <p className="text-muted-foreground mt-2 text-lg">
+                Here is your productivity and finance overview.
+              </p>
+            </div>
+            <div className="flex flex-col items-start sm:items-end shrink-0 pb-1">
+              <span className="text-4xl md:text-5xl font-display font-bold tabular-nums tracking-tight text-foreground/90 leading-none">
+                {format(now, 'HH:mm')}
+                <span className="text-2xl md:text-3xl text-muted-foreground/60 font-normal">:{format(now, 'ss')}</span>
+              </span>
+              <span className="text-sm text-muted-foreground mt-1.5 font-medium">
+                {format(now, 'EEEE, MMMM d, yyyy')}
+              </span>
+            </div>
           </div>
         </motion.div>
 

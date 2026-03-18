@@ -189,6 +189,9 @@ export default function Tasks() {
   const [isTaskOpen,       setIsTaskOpen]       = useState(false);
   const [isCatOpen,        setIsCatOpen]        = useState(false);
   const [isSettingsOpen,   setIsSettingsOpen]   = useState(false);
+  const [showInlineCat,    setShowInlineCat]    = useState(false);
+  const [inlineCatName,    setInlineCatName]    = useState("");
+  const [inlineCatColor,   setInlineCatColor]   = useState("blue");
   const [catToDelete,      setCatToDelete]      = useState<{ id: number; name: string } | null>(null);
   const [catOrder,         setCatOrder]         = useState<number[]>(() => {
     try { return JSON.parse(localStorage.getItem("cat-order") ?? "[]"); } catch { return []; }
@@ -254,6 +257,23 @@ export default function Tasks() {
     createCat({ data: { name: data.name, color: data.color, icon: data.icon } });
   };
 
+  const handleInlineCatCreate = () => {
+    const trimmed = inlineCatName.trim();
+    if (!trimmed) return;
+    createCat(
+      { data: { name: trimmed, color: inlineCatColor, icon: "tag" } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+          taskForm.setValue("category", trimmed);
+          setShowInlineCat(false);
+          setInlineCatName("");
+          setInlineCatColor("blue");
+        },
+      },
+    );
+  };
+
   /* derived */
   const dueSoonCutoff = addDays(startOfDay(new Date()), 7);
   const isDueSoon = (t: typeof tasks[number]) =>
@@ -312,7 +332,10 @@ export default function Tasks() {
             </Button>
 
             {/* New Task dialog */}
-            <Dialog open={isTaskOpen} onOpenChange={setIsTaskOpen}>
+            <Dialog open={isTaskOpen} onOpenChange={(open) => {
+              setIsTaskOpen(open);
+              if (!open) { setShowInlineCat(false); setInlineCatName(""); setInlineCatColor("blue"); }
+            }}>
               <DialogTrigger asChild>
                 <Button className="hover-elevate active-elevate-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 border-0">
                   <Plus className="w-4 h-4 mr-2" />New Task
@@ -340,7 +363,18 @@ export default function Tasks() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={taskForm.control} name="category" render={({ field }) => (
-                      <FormItem><FormLabel>Category</FormLabel>
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Category</FormLabel>
+                          <button
+                            type="button"
+                            onClick={() => setShowInlineCat(!showInlineCat)}
+                            className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                            {showInlineCat ? "Cancel" : "New"}
+                          </button>
+                        </div>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="bg-background"><SelectValue placeholder="Pick category" /></SelectTrigger>
@@ -360,6 +394,42 @@ export default function Tasks() {
                             })}
                           </SelectContent>
                         </Select>
+                        {showInlineCat && (
+                          <div className="mt-1 p-3 rounded-xl border border-border/50 bg-background space-y-2.5">
+                            <p className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">Quick Create</p>
+                            <Input
+                              value={inlineCatName}
+                              onChange={e => setInlineCatName(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleInlineCatCreate(); } }}
+                              placeholder="Category name..."
+                              className="h-8 text-sm bg-muted/50 border-border/40"
+                              autoFocus
+                            />
+                            <div className="flex flex-wrap gap-1.5">
+                              {COLOR_OPTIONS.map(c => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => setInlineCatColor(c.id)}
+                                  className={`w-4.5 h-4.5 rounded-full transition-all ring-offset-background ${
+                                    inlineCatColor === c.id ? `ring-2 ring-offset-1 ${c.ring}` : "opacity-50 hover:opacity-90"
+                                  }`}
+                                  style={{ width: 18, height: 18, backgroundColor: c.hex, borderRadius: "50%" }}
+                                  title={c.id}
+                                />
+                              ))}
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleInlineCatCreate}
+                              disabled={!inlineCatName.trim() || isCreatingCat}
+                              className="w-full h-8 text-xs"
+                            >
+                              {isCreatingCat ? "Creating..." : "Add Category"}
+                            </Button>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )} />

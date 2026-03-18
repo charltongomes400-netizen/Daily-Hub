@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
+import { WelcomeAnimation } from "@/components/WelcomeAnimation";
 import { format, subDays, isAfter } from "date-fns";
 import { motion } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -32,6 +33,15 @@ function getRestDays(): Set<number> {
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] ?? "";
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try {
+      if (!sessionStorage.getItem("ph_welcomed")) {
+        sessionStorage.setItem("ph_welcomed", "1");
+        return true;
+      }
+    } catch {}
+    return false;
+  });
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -140,6 +150,13 @@ export default function Dashboard() {
   };
 
   return (
+    <>
+      {showWelcome && (
+        <WelcomeAnimation
+          name={user?.name ?? ""}
+          onComplete={() => setShowWelcome(false)}
+        />
+      )}
     <Layout>
       <div
         className="h-full overflow-hidden grid p-3 gap-3"
@@ -480,5 +497,6 @@ export default function Dashboard() {
         </motion.div>
       </div>
     </Layout>
+    </>
   );
 }

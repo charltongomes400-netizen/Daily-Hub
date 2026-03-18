@@ -218,44 +218,6 @@ export default function Dashboard() {
         <motion.div variants={containerVariants} initial="hidden" animate="show"
           className="grid grid-cols-3 gap-2 min-h-0">
 
-          {/* Recent Expenses — emerald */}
-          <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 hover:border-emerald-400/40 transition-colors flex flex-col h-full overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0">
-                <div>
-                  <CardTitle className="font-display text-sm">Recent Expenses</CardTitle>
-                  <p className="text-xs text-muted-foreground">Last 7 days</p>
-                </div>
-                <Link href="/finance">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-400 hover:text-emerald-300">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent className="flex-1 min-h-0 p-2 pt-1">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={last7Days} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#34d399" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '11px' }}
-                      itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(v: number) => [`$${v.toFixed(2)}`, 'Spent']}
-                    />
-                    <Area type="monotone" dataKey="total" stroke="#34d399" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </motion.div>
-
           {/* Upcoming Tasks — blue */}
           <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
             <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:border-blue-400/40 transition-colors flex flex-col h-full overflow-hidden">
@@ -297,6 +259,44 @@ export default function Dashboard() {
                     <div className="flex items-center justify-center h-full py-8 text-xs text-muted-foreground">All caught up!</div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Recent Expenses — emerald */}
+          <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
+            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 hover:border-emerald-400/40 transition-colors flex flex-col h-full overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between p-3 pb-0 shrink-0">
+                <div>
+                  <CardTitle className="font-display text-sm">Recent Expenses</CardTitle>
+                  <p className="text-xs text-muted-foreground">Last 7 days</p>
+                </div>
+                <Link href="/finance">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-400 hover:text-emerald-300">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="flex-1 min-h-0 p-2 pt-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={last7Days} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#34d399" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '11px' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      formatter={(v: number) => [`$${v.toFixed(2)}`, 'Spent']}
+                    />
+                    <Area type="monotone" dataKey="total" stroke="#34d399" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           </motion.div>

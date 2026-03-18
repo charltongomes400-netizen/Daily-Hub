@@ -198,7 +198,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground transition-colors rounded-lg"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -218,15 +218,17 @@ export default function Login() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-5">
-            {mode === "signin" ? "Don't have an account?" : "Already have an account?"}
+          <div className="flex items-center justify-center gap-1 mt-5">
+            <span className="text-sm text-muted-foreground">
+              {mode === "signin" ? "Don't have an account?" : "Already have an account?"}
+            </span>
             <button
               onClick={toggleMode}
-              className="ml-1.5 text-primary hover:text-primary/80 font-semibold transition-colors"
+              className="min-h-[44px] px-2 text-sm text-primary hover:text-primary/80 font-semibold transition-colors"
             >
               {mode === "signin" ? "Create one" : "Sign in"}
             </button>
-          </p>
+          </div>
 
           <p className="text-center text-xs text-muted-foreground/60 mt-3">
             Your data is private and only visible to you.

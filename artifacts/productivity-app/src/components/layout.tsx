@@ -3,7 +3,7 @@ import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid, X, LayoutDashboard, CheckCircle2, Wallet,
-  Dumbbell, Target, StickyNote, LogOut, ChevronUp,
+  Dumbbell, Target, StickyNote, LogOut, ChevronUp, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -85,9 +85,10 @@ export function Layout({ children }: { children: ReactNode }) {
                     />
                   )}
                   <app.icon className={`w-5 h-5 shrink-0 ${isActive ? app.accent : "group-hover:text-foreground"}`} />
-                  <span className={`font-semibold text-sm ${isActive ? app.accent : ""}`}>
+                  <span className={`font-semibold text-sm flex-1 ${isActive ? app.accent : ""}`}>
                     {app.title}
                   </span>
+                  <ChevronRight className={`w-4 h-4 shrink-0 transition-all duration-200 ${isActive ? `${app.accent} opacity-80` : "text-muted-foreground/30 group-hover:text-muted-foreground/70 group-hover:translate-x-0.5"}`} />
                 </div>
               </Link>
             );
@@ -166,9 +167,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => setLauncherOpen(true)}
               aria-label="Open app launcher"
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-5 h-5" />
             </button>
           </div>
         </header>
@@ -210,9 +211,9 @@ export function Layout({ children }: { children: ReactNode }) {
               </div>
               <button
                 onClick={() => setLauncherOpen(false)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -264,9 +265,9 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="px-5 pb-6 border-t border-border/30 pt-4">
                 <button
                   onClick={() => { setLauncherOpen(false); logout(); }}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-secondary/60 hover:bg-red-500/10 border border-border/40 hover:border-red-500/20 text-sm text-muted-foreground hover:text-red-400 transition-all"
+                  className="w-full flex items-center justify-center gap-2 min-h-[52px] rounded-xl bg-secondary/60 hover:bg-red-500/10 border border-border/40 hover:border-red-500/20 text-sm text-muted-foreground hover:text-red-400 transition-all active:scale-[0.98]"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-5 h-5" />
                   Sign out
                 </button>
               </div>

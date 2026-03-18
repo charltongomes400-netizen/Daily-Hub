@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { useAuth } from "@/hooks/useAuth";
 import { format, subDays, isAfter } from "date-fns";
 import { motion } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -29,6 +30,8 @@ function getRestDays(): Set<number> {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const firstName = user?.name?.split(" ")[0] ?? "";
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -146,7 +149,7 @@ export default function Dashboard() {
         <motion.div initial="hidden" animate="show" variants={itemVariants}
           className="flex items-center justify-between px-6 py-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm">
           <div>
-            <h1 className="text-3xl font-display font-bold tracking-tight text-foreground leading-tight">Welcome back.</h1>
+            <h1 className="text-3xl font-display font-bold tracking-tight text-foreground leading-tight">Welcome back{firstName ? `, ${firstName}` : ""}.</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Your productivity &amp; finance overview</p>
           </div>
           <div className="text-right">

@@ -11,11 +11,11 @@ const getTimeGreeting = () => {
   return "Good night";
 };
 
-const PARTICLES = Array.from({ length: 22 }, (_, i) => ({
+const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   id: i,
   left: `${(i * 41 + 7) % 86 + 7}%`,
   top: `${(i * 53 + 11) % 76 + 12}%`,
-  size: (i % 3) + 1.5,
+  size: (i % 3) + 1,
   delay: (i * 0.17) % 2.2,
   duration: 3.5 + (i % 5),
 }));
@@ -44,7 +44,7 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
-      style={{ background: "linear-gradient(145deg, #05060e 0%, #0b0d1a 55%, #05060e 100%)" }}
+      style={{ background: "linear-gradient(145deg, #05060e 0%, #090b14 55%, #05060e 100%)" }}
       animate={exiting ? { y: "-100%" } : { y: 0 }}
       transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
       onClick={triggerExit}
@@ -54,20 +54,20 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)",
+            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
           backgroundSize: "64px 64px",
         }}
       />
 
-      {/* Ambient radial glow — pulses */}
+      {/* Ambient center glow — white */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(139,92,246,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse 55% 45% at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%)",
         }}
-        animate={{ opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Corner accents */}
@@ -82,18 +82,18 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
           className="absolute w-6 h-6 pointer-events-none"
           style={{
             ...pos,
-            borderTop: i < 2 ? "1px solid rgba(139,92,246,0.4)" : undefined,
-            borderBottom: i >= 2 ? "1px solid rgba(139,92,246,0.4)" : undefined,
-            borderLeft: i % 2 === 0 ? "1px solid rgba(139,92,246,0.4)" : undefined,
-            borderRight: i % 2 === 1 ? "1px solid rgba(139,92,246,0.4)" : undefined,
+            borderTop: i < 2 ? "1px solid rgba(255,255,255,0.18)" : undefined,
+            borderBottom: i >= 2 ? "1px solid rgba(255,255,255,0.18)" : undefined,
+            borderLeft: i % 2 === 0 ? "1px solid rgba(255,255,255,0.18)" : undefined,
+            borderRight: i % 2 === 1 ? "1px solid rgba(255,255,255,0.18)" : undefined,
           }}
-          initial={{ opacity: 0, scale: 0.5 }}
+          initial={{ opacity: 0, scale: 0.4 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 + i * 0.08, duration: 0.4, ease: "easeOut" }}
+          transition={{ delay: 0.1 + i * 0.07, duration: 0.4, ease: "easeOut" }}
         />
       ))}
 
-      {/* Floating particles */}
+      {/* Floating particles — white */}
       {PARTICLES.map(p => (
         <motion.div
           key={p.id}
@@ -103,13 +103,13 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
             top: p.top,
             width: p.size,
             height: p.size,
-            background: "rgba(139,92,246,0.8)",
-            boxShadow: `0 0 ${p.size * 5}px rgba(139,92,246,0.5)`,
+            background: "rgba(255,255,255,0.7)",
+            boxShadow: `0 0 ${p.size * 4}px rgba(255,255,255,0.25)`,
           }}
           animate={{
-            y: [0, -(14 + p.size * 4), 0],
-            opacity: [0.1, 0.85, 0.1],
-            scale: [1, 1.6, 1],
+            y: [0, -(12 + p.size * 4), 0],
+            opacity: [0.08, 0.6, 0.08],
+            scale: [1, 1.5, 1],
           }}
           transition={{
             duration: p.duration,
@@ -120,39 +120,33 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
         />
       ))}
 
-      {/* Horizontal scan line — top */}
-      <div
-        className="absolute inset-x-0 pointer-events-none"
-        style={{ top: "calc(50% - 78px)" }}
-      >
+      {/* Scan line — top quarter of screen, well above content */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: "22%" }}>
         <motion.div
           style={{
             height: 1,
             background:
-              "linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.5) 20%, rgba(200,180,255,0.9) 50%, rgba(139,92,246,0.5) 80%, transparent 100%)",
+              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.12) 80%, transparent 100%)",
             transformOrigin: "center",
           }}
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.75, ease: "easeOut" }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
         />
       </div>
 
-      {/* Horizontal scan line — bottom */}
-      <div
-        className="absolute inset-x-0 pointer-events-none"
-        style={{ bottom: "calc(50% - 78px)" }}
-      >
+      {/* Scan line — bottom quarter of screen, well below content */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ bottom: "22%" }}>
         <motion.div
           style={{
             height: 1,
             background:
-              "linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.5) 20%, rgba(200,180,255,0.9) 50%, rgba(139,92,246,0.5) 80%, transparent 100%)",
+              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 20%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.12) 80%, transparent 100%)",
             transformOrigin: "center",
           }}
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.75, ease: "easeOut" }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
         />
       </div>
 
@@ -162,57 +156,53 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
         {/* App label with flanking lines */}
         <motion.div
           className="mb-10 flex items-center gap-4"
-          initial={{ opacity: 0, y: -14 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.38, duration: 0.55, ease: "easeOut" }}
         >
-          <motion.div
+          <div
             className="h-px"
             style={{
-              width: 52,
-              background: "linear-gradient(to left, rgba(139,92,246,0.7), transparent)",
+              width: 48,
+              background: "linear-gradient(to left, rgba(255,255,255,0.35), transparent)",
             }}
-            initial={{ scaleX: 0, transformOrigin: "right" }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 0.55, duration: 0.5 }}
           />
           <span
             className="text-[11px] font-semibold tracking-[0.3em] uppercase"
-            style={{ color: "rgba(167,139,250,0.65)" }}
+            style={{ color: "rgba(255,255,255,0.4)" }}
           >
             Productivity Hub
           </span>
-          <motion.div
+          <div
             className="h-px"
             style={{
-              width: 52,
-              background: "linear-gradient(to right, rgba(139,92,246,0.7), transparent)",
+              width: 48,
+              background: "linear-gradient(to right, rgba(255,255,255,0.35), transparent)",
             }}
-            initial={{ scaleX: 0, transformOrigin: "left" }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 0.55, duration: 0.5 }}
           />
         </motion.div>
 
         {/* Time greeting */}
         <motion.p
-          className="font-light tracking-wide mb-1"
-          style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.5rem)", color: "rgba(255,255,255,0.45)" }}
-          initial={{ opacity: 0, y: 28 }}
+          className="font-light tracking-wide mb-2"
+          style={{
+            fontSize: "clamp(1.1rem, 2.5vw, 1.5rem)",
+            color: "rgba(255,255,255,0.4)",
+          }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.78, duration: 0.55, type: "spring", stiffness: 200, damping: 22 }}
         >
           {greeting},
         </motion.p>
 
-        {/* Name — the big hero */}
+        {/* Name — big hero */}
         <motion.h1
           className="font-display font-bold tracking-tight text-white"
           style={{
             fontSize: "clamp(4rem, 11vw, 8rem)",
             lineHeight: 1.0,
-            textShadow:
-              "0 0 60px rgba(139,92,246,0.55), 0 0 140px rgba(139,92,246,0.28)",
+            textShadow: "0 0 80px rgba(255,255,255,0.25), 0 0 200px rgba(255,255,255,0.1)",
           }}
           initial={{ opacity: 0, x: 80 }}
           animate={{ opacity: 1, x: 0 }}
@@ -221,13 +211,13 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
           {firstName}.
         </motion.h1>
 
-        {/* Progress bar */}
+        {/* Progress bar — white */}
         <motion.div
           className="mt-10 rounded-full overflow-hidden"
           style={{
             width: "clamp(160px, 25vw, 240px)",
-            height: 2,
-            background: "rgba(255,255,255,0.06)",
+            height: 1,
+            background: "rgba(255,255,255,0.08)",
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -235,20 +225,17 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
         >
           <motion.div
             className="h-full rounded-full"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(109,40,217,0.9), rgba(167,139,250,1), rgba(221,214,254,1))",
-            }}
+            style={{ background: "rgba(255,255,255,0.7)" }}
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
             transition={{ delay: 1.7, duration: 1.2, ease: [0.4, 0, 0.15, 1] }}
           />
         </motion.div>
 
-        {/* Status badge */}
+        {/* Status */}
         <motion.div
           className="mt-5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2.7, duration: 0.55 }}
         >
@@ -257,7 +244,7 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 2.75, type: "spring", stiffness: 380, damping: 14 }}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "rgba(167,139,250,0.9)" }} />
+            <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.4)" }} />
           </motion.div>
           <span
             className="text-xs font-medium tracking-[0.22em] uppercase"
@@ -271,7 +258,7 @@ export function WelcomeAnimation({ name, onComplete }: Props) {
       {/* Skip hint */}
       <motion.p
         className="absolute bottom-7 text-[10px] tracking-[0.22em] uppercase select-none pointer-events-none"
-        style={{ color: "rgba(255,255,255,0.12)" }}
+        style={{ color: "rgba(255,255,255,0.1)" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.0, duration: 0.6 }}

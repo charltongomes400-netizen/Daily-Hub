@@ -154,17 +154,18 @@ export default function Dashboard() {
           animate="show"
           className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-0"
         >
+          {/* Tasks — blue */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-primary/30 transition-colors">
+            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm border-blue-500/20 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-blue-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CheckCircle2 className="w-24 h-24 text-primary" />
+                <CheckCircle2 className="w-24 h-24 text-blue-400" />
               </div>
               <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Task Completion</CardTitle>
-                <Activity className="h-4 w-4 text-primary" />
+                <Activity className="h-4 w-4 text-blue-400" />
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-bold font-display">{taskProgress}%</div>
+                <div className="text-3xl font-bold font-display text-blue-400">{taskProgress}%</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {completedTasks} of {totalTasks} tasks completed
                 </p>
@@ -177,17 +178,18 @@ export default function Dashboard() {
             </Card>
           </motion.div>
 
+          {/* Finance — emerald */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-accent/30 transition-colors">
+            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 backdrop-blur-sm border-emerald-500/20 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-emerald-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Wallet className="w-24 h-24 text-accent" />
+                <Wallet className="w-24 h-24 text-emerald-400" />
               </div>
               <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Expenses</CardTitle>
-                <Wallet className="h-4 w-4 text-accent" />
+                <Wallet className="h-4 w-4 text-emerald-400" />
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-bold font-display">${monthlyExpenses.toFixed(2)}</div>
+                <div className="text-3xl font-bold font-display text-emerald-400">${monthlyExpenses.toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Total spent in {format(new Date(), 'MMMM')}
                 </p>
@@ -195,17 +197,18 @@ export default function Dashboard() {
             </Card>
           </motion.div>
 
+          {/* Subscriptions — emerald (finance family) */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-chart-4/30 transition-colors">
+            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 backdrop-blur-sm border-emerald-500/20 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-emerald-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CreditCard className="w-24 h-24 text-chart-4" />
+                <CreditCard className="w-24 h-24 text-emerald-400" />
               </div>
               <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-                <CreditCard className="h-4 w-4 text-chart-4" />
+                <CreditCard className="h-4 w-4 text-emerald-400" />
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-bold font-display">${activeMonthlySubs.toFixed(2)}<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
+                <div className="text-3xl font-bold font-display text-emerald-400">${activeMonthlySubs.toFixed(2)}<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Across {subscriptions.filter(s => s.isActive).length} active services
                 </p>
@@ -215,14 +218,15 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-0">
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10">
+          {/* Recent Expenses — emerald */}
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 backdrop-blur-sm border-emerald-500/20 shadow-lg shadow-black/10 hover:border-emerald-400/40 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="font-display">Recent Expenses</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">Last 7 days spending activity</p>
               </div>
               <Link href="/finance">
-                <Button variant="ghost" size="icon" className="hover-elevate">
+                <Button variant="ghost" size="icon" className="hover-elevate text-emerald-400 hover:text-emerald-300">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -233,8 +237,8 @@ export default function Dashboard() {
                   <AreaChart data={last7Days} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#34d399" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
@@ -245,21 +249,22 @@ export default function Dashboard() {
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
                       formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spent']}
                     />
-                    <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
+                    <Area type="monotone" dataKey="total" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 flex flex-col">
+          {/* Upcoming Tasks — blue */}
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm border-blue-500/20 shadow-lg shadow-black/10 flex flex-col hover:border-blue-400/40 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="font-display">Upcoming Tasks</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">Tasks requiring your attention</p>
               </div>
               <Link href="/tasks">
-                <Button variant="ghost" size="icon" className="hover-elevate">
+                <Button variant="ghost" size="icon" className="hover-elevate text-blue-400 hover:text-blue-300">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -299,16 +304,12 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Fitness Widget */}
-          <Card className={`backdrop-blur-sm shadow-lg shadow-black/10 flex flex-col overflow-hidden relative group transition-colors ${
-            isTodayRest
-              ? "bg-amber-400/5 border-amber-400/25 hover:border-amber-400/40"
-              : "bg-card/50 border-border/50 hover:border-primary/30"
-          }`}>
+          {/* Gym — orange */}
+          <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 backdrop-blur-sm border-orange-500/20 shadow-lg shadow-black/10 flex flex-col overflow-hidden relative group hover:border-orange-400/40 transition-colors">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               {isTodayRest
-                ? <Moon className="w-24 h-24 text-amber-400" />
-                : <Dumbbell className="w-24 h-24 text-primary" />}
+                ? <Moon className="w-24 h-24 text-orange-400" />
+                : <Dumbbell className="w-24 h-24 text-orange-400" />}
             </div>
             <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
               <div>
@@ -318,7 +319,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Link href="/gym">
-                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10 text-orange-400 hover:text-orange-300">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -326,28 +327,28 @@ export default function Dashboard() {
             <CardContent className="flex-1 relative z-10">
               {isTodayRest ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center mb-3">
-                    <Moon className="w-6 h-6 text-amber-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-orange-400/10 flex items-center justify-center mb-3">
+                    <Moon className="w-6 h-6 text-orange-400" />
                   </div>
-                  <p className="font-semibold text-amber-400">Rest Day</p>
+                  <p className="font-semibold text-orange-400">Rest Day</p>
                   <p className="text-xs text-muted-foreground mt-1">Recovery is part of the plan.</p>
                 </div>
               ) : todaysExercises.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/60 flex items-center justify-center mb-3">
-                    <Dumbbell className="w-6 h-6 text-muted-foreground/40" />
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-3">
+                    <Dumbbell className="w-6 h-6 text-orange-400/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">No workout planned for today.</p>
                   <Link href="/gym">
-                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Plan your workout →</span>
+                    <span className="text-xs text-orange-400 hover:underline mt-1 cursor-pointer">Plan your workout →</span>
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-2 mt-2">
                   {todaysExercises.slice(0, 5).map((ex) => (
-                    <div key={ex.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-secondary/50 border border-border/30">
+                    <div key={ex.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-orange-500/5 border border-orange-500/15">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
                         <span className="font-medium text-sm text-foreground truncate">{ex.name}</span>
                       </div>
                       {(ex.sets || ex.reps || ex.weight) && (
@@ -364,7 +365,7 @@ export default function Dashboard() {
                     </p>
                   )}
                   <div className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
-                    <Flame className="w-3.5 h-3.5 text-primary" />
+                    <Flame className="w-3.5 h-3.5 text-orange-400" />
                     {todaysExercises.length} exercise{todaysExercises.length !== 1 ? "s" : ""} planned
                   </div>
                 </div>
@@ -376,10 +377,10 @@ export default function Dashboard() {
         {/* ── Bottom row: Notes + Goals ────────────────────────────── */}
         <motion.div variants={itemVariants} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-0">
 
-          {/* Latest Note */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 group hover:border-primary/30 transition-colors overflow-hidden relative flex flex-col">
+          {/* Latest Note — amber */}
+          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 backdrop-blur-sm border-amber-500/20 shadow-lg shadow-black/10 group hover:border-amber-400/40 transition-colors overflow-hidden relative flex flex-col">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <StickyNote className="w-24 h-24 text-primary" />
+              <StickyNote className="w-24 h-24 text-amber-400" />
             </div>
             <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
               <div>
@@ -389,7 +390,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Link href="/notes">
-                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10 text-amber-400 hover:text-amber-300">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -397,16 +398,16 @@ export default function Dashboard() {
             <CardContent className="flex-1 relative z-10">
               {!latestNote ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/60 flex items-center justify-center mb-3">
-                    <StickyNote className="w-5 h-5 text-muted-foreground/40" />
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3">
+                    <StickyNote className="w-5 h-5 text-amber-400/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">No notes yet.</p>
                   <Link href="/notes">
-                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Create your first note →</span>
+                    <span className="text-xs text-amber-400 hover:underline mt-1 cursor-pointer">Create your first note →</span>
                   </Link>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-secondary/40 border border-border/30 hover:border-primary/20 transition-colors">
+                <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 hover:border-amber-400/25 transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="font-semibold text-foreground leading-snug">{latestNote.title}</h3>
                     <span className="text-[10px] text-muted-foreground/60 shrink-0 mt-0.5">
@@ -424,10 +425,10 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Goals Progress */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg shadow-black/10 group hover:border-primary/30 transition-colors overflow-hidden relative flex flex-col">
+          {/* Goals — pink */}
+          <Card className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 backdrop-blur-sm border-pink-500/20 shadow-lg shadow-black/10 group hover:border-pink-400/40 transition-colors overflow-hidden relative flex flex-col">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Target className="w-24 h-24 text-primary" />
+              <Target className="w-24 h-24 text-pink-400" />
             </div>
             <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
               <div>
@@ -437,7 +438,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Link href="/goals">
-                <Button variant="ghost" size="icon" className="hover-elevate relative z-10">
+                <Button variant="ghost" size="icon" className="hover-elevate relative z-10 text-pink-400 hover:text-pink-300">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -445,17 +446,16 @@ export default function Dashboard() {
             <CardContent className="flex-1 relative z-10">
               {goals.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/60 flex items-center justify-center mb-3">
-                    <Target className="w-5 h-5 text-muted-foreground/40" />
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center mb-3">
+                    <Target className="w-5 h-5 text-pink-400/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">No goals set yet.</p>
                   <Link href="/goals">
-                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">Set your first goal →</span>
+                    <span className="text-xs text-pink-400 hover:underline mt-1 cursor-pointer">Set your first goal →</span>
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Overall progress bar */}
                   {goals.length > 0 && (
                     <div className="mb-4">
                       <div className="h-2 rounded-full bg-secondary/60 overflow-hidden">
@@ -463,22 +463,22 @@ export default function Dashboard() {
                           className="h-full rounded-full transition-all duration-700"
                           style={{
                             width: `${goalCompletionPct}%`,
-                            background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary)/0.7))",
+                            background: "linear-gradient(90deg, #f472b6, #ec4899)",
                           }}
                         />
                       </div>
                     </div>
                   )}
                   {activeGoals.slice(0, 4).map(goal => (
-                    <div key={goal.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/40 border border-border/30">
+                    <div key={goal.id} className="flex items-center gap-3 p-3 rounded-xl bg-pink-500/5 border border-pink-500/15">
                       <div className="relative w-8 h-8 shrink-0">
                         <svg width="32" height="32" className="-rotate-90">
                           <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="3" className="text-border/40" />
-                          <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="3"
+                          <circle cx="16" cy="16" r="12" fill="none" stroke="#f472b6" strokeWidth="3"
                             strokeDasharray={2 * Math.PI * 12}
                             strokeDashoffset={2 * Math.PI * 12 * (1 - goal.progress / 100)}
                             strokeLinecap="round"
-                            className="text-primary transition-all"
+                            className="transition-all"
                           />
                         </svg>
                         <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-foreground">{goal.progress}%</span>

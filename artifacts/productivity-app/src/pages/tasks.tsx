@@ -163,10 +163,12 @@ function SortableCategoryTab({
   const col  = getColor(cat.color);
   const Icon = getIcon(cat.icon);
 
+  const horizontalTransform = transform ? { ...transform, y: 0 } : null;
+
   return (
     <button
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      style={{ transform: CSS.Transform.toString(horizontalTransform), transition }}
       {...attributes}
       {...listeners}
       onClick={onClick}

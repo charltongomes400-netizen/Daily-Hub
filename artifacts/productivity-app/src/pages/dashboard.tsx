@@ -197,18 +197,18 @@ export default function Dashboard() {
             </Card>
           </motion.div>
 
-          {/* Subscriptions — emerald (finance family) */}
+          {/* Subscriptions — yellow */}
           <motion.div variants={itemVariants}>
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 backdrop-blur-sm border-emerald-500/20 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-emerald-400/40 transition-colors">
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 backdrop-blur-sm border-yellow-500/20 shadow-lg shadow-black/10 overflow-hidden relative group hover:border-yellow-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CreditCard className="w-24 h-24 text-emerald-400" />
+                <CreditCard className="w-24 h-24 text-yellow-400" />
               </div>
               <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-                <CreditCard className="h-4 w-4 text-emerald-400" />
+                <CreditCard className="h-4 w-4 text-yellow-400" />
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-bold font-display text-emerald-400">${activeMonthlySubs.toFixed(2)}<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
+                <div className="text-3xl font-bold font-display text-yellow-400">${activeMonthlySubs.toFixed(2)}<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Across {subscriptions.filter(s => s.isActive).length} active services
                 </p>

@@ -390,8 +390,8 @@ export default function Dashboard() {
           className="grid grid-cols-2 gap-3 min-h-0">
 
           {/* Latest Note — amber */}
-          <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
-            <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:border-amber-400/40 transition-colors flex flex-col h-full overflow-hidden relative group">
+          <motion.div variants={itemVariants} className="min-h-0 flex flex-col gap-2">
+            <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 hover:border-amber-400/40 transition-colors flex flex-col flex-1 overflow-hidden relative group">
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <StickyNote className="w-14 h-14 text-amber-400" />
               </div>
@@ -429,6 +429,12 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+            <button
+              onClick={() => setShowWelcome(true)}
+              className="w-full py-1.5 rounded-lg text-[10px] font-medium tracking-widest uppercase text-violet-400/50 border border-violet-500/15 bg-violet-500/5 hover:bg-violet-500/10 hover:text-violet-400/80 hover:border-violet-500/30 transition-all"
+            >
+              ▶ preview animation
+            </button>
           </motion.div>
 
           {/* Goals — pink */}

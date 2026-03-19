@@ -176,7 +176,18 @@ export function Layout({ children }: { children: ReactNode }) {
 
         {/* ── Page content ── */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className="min-h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

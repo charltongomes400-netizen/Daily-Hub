@@ -41,8 +41,8 @@ const expenseSchema = z.object({
 
 const subSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  amount: z.coerce.number().min(0.01, "Amount must be > 0"),
-  billingCycle: z.enum(["monthly", "quarterly", "yearly"]),
+  amount: z.coerce.number().min(0, "Amount can't be negative"),
+  billingCycle: z.enum(["weekly", "monthly", "quarterly", "yearly", "free_trial"]),
   category: z.string().min(1, "Category is required"),
   nextBillingDate: z.string().min(1, "Date is required"),
 });
@@ -319,9 +319,11 @@ export default function Finance() {
   const netBalance  = totalIncome - totalSpent;
 
   const totalMonthlySubs = subscriptions.filter(s => s.isActive).reduce((sum, s) => {
+    if (s.billingCycle === "weekly")    return sum + (s.amount * 52) / 12;
     if (s.billingCycle === "monthly")   return sum + s.amount;
     if (s.billingCycle === "yearly")    return sum + s.amount / 12;
     if (s.billingCycle === "quarterly") return sum + s.amount / 3;
+    if (s.billingCycle === "free_trial") return sum;
     return sum;
   }, 0);
 
@@ -680,9 +682,11 @@ export default function Finance() {
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
                                 <SelectContent>
+                                  <SelectItem value="weekly">Weekly</SelectItem>
                                   <SelectItem value="monthly">Monthly</SelectItem>
                                   <SelectItem value="quarterly">Quarterly</SelectItem>
                                   <SelectItem value="yearly">Yearly</SelectItem>
+                                  <SelectItem value="free_trial">Free Trial</SelectItem>
                                 </SelectContent>
                               </Select>
                             </FormItem>
@@ -728,7 +732,9 @@ export default function Finance() {
                       </div>
                       <div className="flex items-end gap-1 mb-6">
                         <span className="text-3xl font-bold font-display text-foreground">${sub.amount.toFixed(2)}</span>
-                        <span className="text-sm text-muted-foreground mb-1 pb-0.5">/{sub.billingCycle === 'monthly' ? 'mo' : sub.billingCycle === 'yearly' ? 'yr' : 'qtr'}</span>
+                        <span className="text-sm text-muted-foreground mb-1 pb-0.5">
+                          {sub.billingCycle === 'free_trial' ? '🆓 Free Trial' : `/${sub.billingCycle === 'weekly' ? 'wk' : sub.billingCycle === 'monthly' ? 'mo' : sub.billingCycle === 'yearly' ? 'yr' : 'qtr'}`}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center text-muted-foreground">

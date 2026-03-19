@@ -94,9 +94,11 @@ export default function Dashboard() {
   const activeMonthlySubs = subscriptions
     .filter(s => s.isActive)
     .reduce((sum, s) => {
+      if (s.billingCycle === "weekly") return sum + (s.amount * 52) / 12;
       if (s.billingCycle === "monthly") return sum + s.amount;
       if (s.billingCycle === "yearly") return sum + (s.amount / 12);
       if (s.billingCycle === "quarterly") return sum + (s.amount / 3);
+      if (s.billingCycle === "free_trial") return sum;
       return sum;
     }, 0);
 

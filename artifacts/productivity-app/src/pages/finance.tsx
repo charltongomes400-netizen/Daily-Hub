@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, TrendingDown, TrendingUp, RefreshCw,
   ArrowDownLeft, ArrowUpRight, Banknote, Clock, CheckCircle2, User,
-  Target, PiggyBank, BarChart3, Edit2, Pencil, Check,
+  Target, PiggyBank, BarChart3, Edit2, Pencil, Check, Sparkles, Wand2,
 } from "lucide-react";
 import { format, isPast, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -605,6 +605,67 @@ export default function Finance() {
                   />
                 </div>
               </div>
+
+              {/* ── Smart Recommendation ── */}
+              {thisMonthIncomeTotal > 0 && (
+                <div className="mt-5 pt-4 border-t border-border/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Smart Recommendation</span>
+                      <span className="text-xs text-muted-foreground/50">— 50/30/20 rule</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const recommended = thisMonthIncomeTotal * 0.5;
+                        setMonthlyBudget(recommended);
+                        localStorage.setItem("ph_monthly_budget", String(recommended));
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors"
+                    >
+                      <Wand2 className="w-3 h-3" />
+                      Apply
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-xl p-3 bg-destructive/8 border border-destructive/15">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-destructive" />
+                        <span className="text-xs text-muted-foreground font-medium">Expenses</span>
+                        <span className="text-xs text-muted-foreground/50 ml-auto">50%</span>
+                      </div>
+                      <p className="text-base font-display font-bold text-foreground">${(thisMonthIncomeTotal * 0.5).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">Needs &amp; wants</p>
+                    </div>
+                    <div className="rounded-xl p-3 bg-blue-500/8 border border-blue-500/15">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        <span className="text-xs text-muted-foreground font-medium">Savings</span>
+                        <span className="text-xs text-muted-foreground/50 ml-auto">30%</span>
+                      </div>
+                      <p className="text-base font-display font-bold text-foreground">${(thisMonthIncomeTotal * 0.3).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">Emergency &amp; goals</p>
+                    </div>
+                    <div className="rounded-xl p-3 bg-violet-500/8 border border-violet-500/15">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-violet-400" />
+                        <span className="text-xs text-muted-foreground font-medium">Investments</span>
+                        <span className="text-xs text-muted-foreground/50 ml-auto">20%</span>
+                      </div>
+                      <p className="text-base font-display font-bold text-foreground">${(thisMonthIncomeTotal * 0.2).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">Long-term growth</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full overflow-hidden flex">
+                    <div className="h-full bg-destructive/70 transition-all" style={{ width: "50%" }} />
+                    <div className="h-full bg-blue-400/70 transition-all mx-0.5" style={{ width: "30%" }} />
+                    <div className="h-full bg-violet-400/70 transition-all" style={{ flex: 1 }} />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground/50 mt-1 px-0.5">
+                    <span>Expenses 50%</span><span>Savings 30%</span><span>Investments 20%</span>
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* ── Monthly Breakdown ───────────────────────────────────── */}

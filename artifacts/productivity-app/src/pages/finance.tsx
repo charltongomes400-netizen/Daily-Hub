@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, TrendingDown, TrendingUp, RefreshCw,
   ArrowDownLeft, ArrowUpRight, Banknote, Clock, CheckCircle2, User,
-  Target, PiggyBank, BarChart3, Edit2,
+  Target, PiggyBank, BarChart3, Edit2, Pencil, Check,
 } from "lucide-react";
 import { format, isPast, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -171,6 +171,12 @@ export default function Finance() {
   const [addFundsTarget, setAddFundsTarget] = useState<SavingsEntry | null>(null);
   const [isInvestOpen, setIsInvestOpen] = useState(false);
   const [updatePriceTarget, setUpdatePriceTarget] = useState<InvestmentEntry | null>(null);
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(() => {
+    const stored = localStorage.getItem("ph_monthly_budget");
+    return stored ? parseFloat(stored) : 0;
+  });
+  const [budgetEditing, setBudgetEditing] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("");
 
   /* ── Expenses ── */
   const { data: expenses = [], isLoading: loadExp } = useGetExpenses();
@@ -368,6 +374,15 @@ export default function Finance() {
 
   const CHART_COLORS = ["#10b981","#3b82f6","#f59e0b","#ec4899","#8b5cf6","#ef4444","#06b6d4","#84cc16","#f97316","#a855f7"];
 
+  const thisMonthSpent        = thisMonthExpenses.reduce((s, e) => s + e.amount, 0);
+  const thisMonthIncomeTotal  = thisMonthIncome.reduce((s, e) => s + e.amount, 0);
+  const budgetRemaining       = monthlyBudget > 0 ? monthlyBudget - thisMonthSpent : thisMonthIncomeTotal - thisMonthSpent;
+  const budgetUsedPct         = monthlyBudget > 0
+    ? Math.min(thisMonthSpent / monthlyBudget, 1)
+    : thisMonthIncomeTotal > 0 ? Math.min(thisMonthSpent / thisMonthIncomeTotal, 1) : 0;
+  const budgetOver            = monthlyBudget > 0 ? thisMonthSpent > monthlyBudget : false;
+  const currentMonthLabel     = now.toLocaleString("default", { month: "long", year: "numeric" });
+
   /* ═══════════════════════════════════════════════════════════════════ */
   return (
     <Layout>
@@ -494,6 +509,103 @@ export default function Finance() {
                 </Dialog>
               </Card>
             </div>
+
+            {/* ── Budget Box ───────────────────────────────────────────── */}
+            <Card className="bg-card border-border/50 shadow-lg p-5 mb-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Monthly Budget</p>
+                    <span className="text-xs text-muted-foreground/60">— {currentMonthLabel}</span>
+                  </div>
+                  {budgetEditing ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-muted-foreground font-semibold">$</span>
+                      <input
+                        autoFocus
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={budgetInput}
+                        onChange={e => setBudgetInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            const v = parseFloat(budgetInput);
+                            if (!isNaN(v) && v >= 0) {
+                              setMonthlyBudget(v);
+                              localStorage.setItem("ph_monthly_budget", String(v));
+                            }
+                            setBudgetEditing(false);
+                          }
+                          if (e.key === "Escape") setBudgetEditing(false);
+                        }}
+                        className="w-36 bg-background border border-border/60 rounded-lg px-3 py-1.5 text-lg font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                      />
+                      <button
+                        onClick={() => {
+                          const v = parseFloat(budgetInput);
+                          if (!isNaN(v) && v >= 0) {
+                            setMonthlyBudget(v);
+                            localStorage.setItem("ph_monthly_budget", String(v));
+                          }
+                          setBudgetEditing(false);
+                        }}
+                        className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-2xl font-display font-bold text-foreground">
+                        {monthlyBudget > 0 ? `$${monthlyBudget.toFixed(2)}` : "Not set"}
+                      </span>
+                      <button
+                        onClick={() => { setBudgetInput(monthlyBudget > 0 ? String(monthlyBudget) : ""); setBudgetEditing(true); }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                        title="Edit budget"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-6 text-sm shrink-0">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-0.5">Income</p>
+                    <p className="font-semibold text-emerald-400">${thisMonthIncomeTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-0.5">Spent</p>
+                    <p className="font-semibold text-destructive">${thisMonthSpent.toFixed(2)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-0.5">Remaining</p>
+                    <p className={`font-semibold ${budgetRemaining >= 0 ? "text-foreground" : "text-destructive"}`}>
+                      {budgetRemaining >= 0 ? "$" : "-$"}{Math.abs(budgetRemaining).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                  <span>
+                    {monthlyBudget > 0
+                      ? `${(budgetUsedPct * 100).toFixed(0)}% of budget used`
+                      : thisMonthIncomeTotal > 0
+                        ? `${(budgetUsedPct * 100).toFixed(0)}% of income spent`
+                        : "No income logged this month"}
+                  </span>
+                  {budgetOver && <span className="text-destructive font-medium">Over budget!</span>}
+                </div>
+                <div className="h-2.5 rounded-full bg-muted/40 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${budgetOver ? "bg-destructive" : budgetUsedPct > 0.8 ? "bg-amber-500" : "bg-emerald-500"}`}
+                    style={{ width: `${(budgetUsedPct * 100).toFixed(1)}%` }}
+                  />
+                </div>
+              </div>
+            </Card>
 
             {/* ── Monthly Breakdown ───────────────────────────────────── */}
             {(expCategoryData.length > 0 || incomeCategoryData.length > 0) && (

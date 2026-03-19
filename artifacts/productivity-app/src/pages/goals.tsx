@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -107,6 +108,44 @@ function ProgressRing({ value, size = 80, stroke = 6 }: { value: number; size?: 
   );
 }
 
+/* ── Celebration burst ──────────────────────────────────────── */
+const CONFETTI_COLORS = ["#10b981","#f59e0b","#3b82f6","#ec4899","#8b5cf6","#f97316","#34d399","#fbbf24"];
+
+function GoalCelebration() {
+  const particles = useMemo(() =>
+    Array.from({ length: 28 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 340,
+      y: -(Math.random() * 220 + 60),
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      size: Math.random() * 7 + 4,
+      rotate: Math.random() * 540 - 270,
+      delay: Math.random() * 0.35,
+      isSquare: Math.random() > 0.5,
+    }))
+  , []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
+          animate={{ x: p.x, y: p.y, opacity: 0, scale: 0.3, rotate: p.rotate }}
+          transition={{ duration: 1.5, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            position: "absolute",
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            borderRadius: p.isSquare ? "2px" : "50%",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ── Goal card ──────────────────────────────────────────────── */
 function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }: {
   goal: Goal;
@@ -123,8 +162,13 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
   const isOverdue = daysLeft !== null && daysLeft < 0;
   const isAlmostDue = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
   const isHot = goal.progress >= 75;
+  const [celebrating, setCelebrating] = useState(false);
 
   return (
+    <>
+    <AnimatePresence>
+      {celebrating && <GoalCelebration />}
+    </AnimatePresence>
     <div className={`group relative rounded-2xl border p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
       isOverdue ? "bg-destructive/5 border-destructive/20" : "bg-card border-border/50 hover:border-primary/30"
     }`}>
@@ -199,7 +243,11 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
           </div>
           {!isTaskSynced && goal.progress >= 100 ? (
             <button
-              onClick={() => onComplete(goal.id)}
+              onClick={() => {
+                setCelebrating(true);
+                setTimeout(() => setCelebrating(false), 2000);
+                onComplete(goal.id);
+              }}
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold whitespace-nowrap transition-all animate-pulse hover:animate-none border border-emerald-500/20"
             >
               <Trophy className="w-3.5 h-3.5" />
@@ -236,6 +284,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
         </div>
       )}
     </div>
+    </>
   );
 }
 

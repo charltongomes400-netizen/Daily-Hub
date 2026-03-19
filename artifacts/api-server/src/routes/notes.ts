@@ -1,40 +1,58 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { notesTable } from "@workspace/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import { requireAuth, getUserId } from "../middleware/auth";
 
 const router: IRouter = Router();
-
 router.use(requireAuth);
 
+const NOTE_COLORS = ["default","red","pink","orange","yellow","teal","blue","sage","grape","graphite"] as const;
+
 const CreateNoteBody = z.object({
-  title: z.string().min(1),
+  title: z.string().default(""),
   content: z.string().min(1),
+  color: z.enum(NOTE_COLORS).default("default"),
+  isPinned: z.boolean().default(false),
 });
 
 const UpdateNoteBody = z.object({
-  title: z.string().min(1).optional(),
-  content: z.string().min(1).optional(),
+  title: z.string().optional(),
+  content: z.string().optional(),
+  color: z.enum(NOTE_COLORS).optional(),
+  isPinned: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
 });
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
+
+function serializeNote(n: typeof notesTable.$inferSelect) {
+  return {
+    ...n,
+    createdAt: n.createdAt.toISOString(),
+    updatedAt: n.updatedAt.toISOString(),
+  };
+}
 
 router.get("/", async (req, res) => {
   const userId = getUserId(req);
   const notes = await db
     .select()
     .from(notesTable)
-    .where(eq(notesTable.userId, userId))
-    .orderBy(notesTable.createdAt);
-  res.json(
-    notes.map((n) => ({
-      ...n,
-      createdAt: n.createdAt.toISOString(),
-      updatedAt: n.updatedAt.toISOString(),
-    }))
-  );
+    .where(and(eq(notesTable.userId, userId), eq(notesTable.isArchived, false)))
+    .orderBy(desc(notesTable.updatedAt));
+  res.json(notes.map(serializeNote));
+});
+
+router.get("/archived", async (req, res) => {
+  const userId = getUserId(req);
+  const notes = await db
+    .select()
+    .from(notesTable)
+    .where(and(eq(notesTable.userId, userId), eq(notesTable.isArchived, true)))
+    .orderBy(desc(notesTable.updatedAt));
+  res.json(notes.map(serializeNote));
 });
 
 router.post("/", async (req, res) => {
@@ -44,11 +62,7 @@ router.post("/", async (req, res) => {
     .insert(notesTable)
     .values({ userId, ...body })
     .returning();
-  res.status(201).json({
-    ...note,
-    createdAt: note.createdAt.toISOString(),
-    updatedAt: note.updatedAt.toISOString(),
-  });
+  res.status(201).json(serializeNote(note));
 });
 
 router.patch("/:id", async (req, res) => {
@@ -64,11 +78,8 @@ router.patch("/:id", async (req, res) => {
     .set(updates)
     .where(and(eq(notesTable.id, id), eq(notesTable.userId, userId)))
     .returning();
-  res.json({
-    ...note,
-    createdAt: note.createdAt.toISOString(),
-    updatedAt: note.updatedAt.toISOString(),
-  });
+  if (!note) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(serializeNote(note));
 });
 
 router.delete("/:id", async (req, res) => {

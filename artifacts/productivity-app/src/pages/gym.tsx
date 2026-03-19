@@ -41,11 +41,11 @@ interface GymExercise {
 }
 
 const exerciseSchema = z.object({
-  name: z.string().min(1, "Exercise name is required"),
+  name: z.string().min(1, "Exercise name is required").max(80, "Too long"),
   sets: z.coerce.number().int().positive().optional().or(z.literal("")),
   reps: z.coerce.number().int().positive().optional().or(z.literal("")),
-  weight: z.string().optional(),
-  notes: z.string().optional(),
+  weight: z.string().max(20, "Too long").optional(),
+  notes: z.string().max(200, "Too long").optional(),
 });
 
 type ExerciseForm = z.infer<typeof exerciseSchema>;
@@ -122,7 +122,7 @@ function ExerciseCard({
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="bg-background font-semibold" placeholder="Exercise name" {...field} />
+                    <Input className="bg-background font-semibold" placeholder="Exercise name" maxLength={80} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,13 +143,13 @@ function ExerciseCard({
                 <FormField control={form.control} name="weight" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs text-muted-foreground">Weight</FormLabel>
-                    <FormControl><Input className="bg-background text-center" placeholder="e.g. 60kg" {...field} /></FormControl>
+                    <FormControl><Input className="bg-background text-center" placeholder="e.g. 60kg" maxLength={20} {...field} /></FormControl>
                   </FormItem>
                 )} />
               </div>
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
-                  <FormControl><Input className="bg-background text-sm" placeholder="Notes (optional)" {...field} /></FormControl>
+                  <FormControl><Input className="bg-background text-sm" placeholder="Notes (optional)" maxLength={200} {...field} /></FormControl>
                 </FormItem>
               )} />
               <div className="flex gap-2 pt-1">
@@ -254,7 +254,7 @@ function AddExerciseDialog({
               <FormItem>
                 <FormLabel>Exercise Name</FormLabel>
                 <FormControl>
-                  <Input className="bg-background" placeholder="e.g. Bench Press, Squat…" {...field} />
+                  <Input className="bg-background" placeholder="e.g. Bench Press, Squat…" maxLength={80} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -275,14 +275,14 @@ function AddExerciseDialog({
               <FormField control={form.control} name="weight" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Weight</FormLabel>
-                  <FormControl><Input className="bg-background text-center" placeholder="e.g. 60kg" {...field} /></FormControl>
+                  <FormControl><Input className="bg-background text-center" placeholder="e.g. 60kg" maxLength={20} {...field} /></FormControl>
                 </FormItem>
               )} />
             </div>
             <FormField control={form.control} name="notes" render={({ field }) => (
               <FormItem>
                 <FormLabel>Notes <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                <FormControl><Input className="bg-background" placeholder="e.g. slow negatives, superset with…" {...field} /></FormControl>
+                <FormControl><Input className="bg-background" placeholder="e.g. slow negatives, superset with…" maxLength={200} {...field} /></FormControl>
               </FormItem>
             )} />
             <Button type="submit" className="w-full">Add Exercise</Button>

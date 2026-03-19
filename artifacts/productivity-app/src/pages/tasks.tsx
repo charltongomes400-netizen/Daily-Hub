@@ -78,8 +78,8 @@ function getColor(id: string) { return COLOR_MAP[id] ?? COLOR_OPTIONS[0]; }
 
 /* ─── Task form schema ─────────────────────────────────────────────── */
 const taskSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  title: z.string().min(1, "Title is required").max(100, "Too long"),
+  description: z.string().max(200, "Too long").optional(),
   priority: z.enum(["low", "medium", "high"]),
   category: z.string().min(1, "Category is required"),
   deadline: z.string().optional().refine(v => !v || !isNaN(Date.parse(v)), { message: "Invalid date" }),
@@ -526,14 +526,14 @@ export default function Tasks() {
                 <form onSubmit={taskForm.handleSubmit(onSubmitTask)} className="space-y-4 mt-4">
                   <FormField control={taskForm.control} name="title" render={({ field }) => (
                     <FormItem><FormLabel>Title</FormLabel>
-                      <FormControl><Input placeholder="What needs to be done?" className="bg-background" {...field} /></FormControl>
+                      <FormControl><Input placeholder="What needs to be done?" className="bg-background" maxLength={100} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
 
                   <FormField control={taskForm.control} name="description" render={({ field }) => (
                     <FormItem><FormLabel>Description (Optional)</FormLabel>
-                      <FormControl><Textarea placeholder="Add some details..." className="bg-background resize-none" {...field} /></FormControl>
+                      <FormControl><Textarea placeholder="Add some details..." className="bg-background resize-none" maxLength={200} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -989,14 +989,14 @@ export default function Tasks() {
             <form onSubmit={editTaskForm.handleSubmit(onSubmitEditTask)} className="space-y-4 mt-4">
               <FormField control={editTaskForm.control} name="title" render={({ field }) => (
                 <FormItem><FormLabel>Title</FormLabel>
-                  <FormControl><Input placeholder="What needs to be done?" className="bg-background" {...field} /></FormControl>
+                  <FormControl><Input placeholder="What needs to be done?" className="bg-background" maxLength={100} {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
 
               <FormField control={editTaskForm.control} name="description" render={({ field }) => (
                 <FormItem><FormLabel>Description (Optional)</FormLabel>
-                  <FormControl><Textarea placeholder="Add some details..." className="bg-background resize-none" {...field} /></FormControl>
+                  <FormControl><Textarea placeholder="Add some details..." className="bg-background resize-none" maxLength={200} {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

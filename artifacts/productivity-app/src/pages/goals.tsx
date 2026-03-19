@@ -39,10 +39,10 @@ interface Goal {
 }
 
 const goalSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  title: z.string().min(1, "Title is required").max(100, "Too long"),
+  description: z.string().max(200, "Too long").optional(),
   targetDate: z.string().optional(),
-  category: z.string().optional(),
+  category: z.string().max(50, "Too long").optional(),
 });
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -583,14 +583,14 @@ export default function Goals() {
                     <FormField control={form.control} name="title" render={({ field }) => (
                       <FormItem>
                         <FormLabel>What do you want to achieve?</FormLabel>
-                        <FormControl><Input className="bg-background text-base" placeholder="e.g. Run a 5K, Learn Spanish…" {...field} /></FormControl>
+                        <FormControl><Input className="bg-background text-base" placeholder="e.g. Run a 5K, Learn Spanish…" maxLength={100} {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="description" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Why does this matter? <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                        <FormControl><Input className="bg-background" placeholder="Your motivation…" {...field} /></FormControl>
+                        <FormControl><Input className="bg-background" placeholder="Your motivation…" maxLength={200} {...field} /></FormControl>
                       </FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
@@ -605,7 +605,7 @@ export default function Goals() {
                       <FormField control={form.control} name="category" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Category <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                          <FormControl><Input className="bg-background" placeholder="Fitness, Learning…" {...field} /></FormControl>
+                          <FormControl><Input className="bg-background" placeholder="Fitness, Learning…" maxLength={50} {...field} /></FormControl>
                         </FormItem>
                       )} />
                     </div>
@@ -811,14 +811,14 @@ export default function Goals() {
                   <FormField control={editForm.control} name="title" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Goal Title</FormLabel>
-                      <FormControl><Input className="bg-background text-base" {...field} /></FormControl>
+                      <FormControl><Input className="bg-background text-base" maxLength={100} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={editForm.control} name="description" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Why does this matter? <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                      <FormControl><Input className="bg-background" {...field} /></FormControl>
+                      <FormControl><Input className="bg-background" maxLength={200} {...field} /></FormControl>
                     </FormItem>
                   )} />
                   <div className="grid grid-cols-2 gap-4">
@@ -833,7 +833,7 @@ export default function Goals() {
                     <FormField control={editForm.control} name="category" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                        <FormControl><Input className="bg-background" {...field} /></FormControl>
+                        <FormControl><Input className="bg-background" maxLength={50} {...field} /></FormControl>
                       </FormItem>
                     )} />
                   </div>

@@ -33,34 +33,34 @@ import { Switch } from "@/components/ui/switch";
 
 /* ── Schemas ─────────────────────────────────────────────────────── */
 const expenseSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Title is required").max(80, "Too long"),
   amount: z.coerce.number().min(0.01, "Amount must be > 0"),
   type: z.enum(["expense", "income"]),
-  category: z.string().min(1, "Category is required"),
+  category: z.string().min(1, "Category is required").max(50, "Too long"),
   date: z.string().min(1, "Date is required"),
 });
 
 const subSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(80, "Too long"),
   amount: z.coerce.number().min(0, "Amount can't be negative"),
   billingCycle: z.enum(["weekly", "monthly", "quarterly", "yearly", "free_trial"]),
-  category: z.string().min(1, "Category is required"),
+  category: z.string().min(1, "Category is required").max(50, "Too long"),
   nextBillingDate: z.string().min(1, "Date is required"),
 });
 
 const owedSchema = z.object({
-  fromName: z.string().min(1, "Name is required"),
+  fromName: z.string().min(1, "Name is required").max(60, "Too long"),
   amount: z.coerce.number().min(0.01, "Amount must be > 0"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().min(1, "Description is required").max(150, "Too long"),
   dueDate: z.string().optional(),
-  notes: z.string().optional(),
+  notes: z.string().max(250, "Too long").optional(),
 });
 
 const savingsSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(80, "Too long"),
   targetAmount: z.coerce.number().min(0.01, "Target must be > 0"),
   currentAmount: z.coerce.number().min(0, "Amount can't be negative").default(0),
-  notes: z.string().optional(),
+  notes: z.string().max(250, "Too long").optional(),
 });
 
 const addFundsSchema = z.object({
@@ -68,13 +68,13 @@ const addFundsSchema = z.object({
 });
 
 const investmentSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(80, "Too long"),
   type: z.enum(["stock", "crypto", "etf", "real_estate", "fund", "other"]),
-  ticker: z.string().optional(),
+  ticker: z.string().max(12, "Too long").optional(),
   quantity: z.coerce.number().min(0, "Can't be negative").default(0),
   purchasePrice: z.coerce.number().min(0, "Can't be negative"),
   currentPrice: z.coerce.number().min(0, "Can't be negative"),
-  notes: z.string().optional(),
+  notes: z.string().max(250, "Too long").optional(),
 });
 
 const updatePriceSchema = z.object({
@@ -475,7 +475,7 @@ export default function Finance() {
                           </FormItem>
                         )} />
                         <FormField control={expForm.control} name="title" render={({ field }) => (
-                          <FormItem><FormLabel>Title</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Groceries, Salary…" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem><FormLabel>Title</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Groceries, Salary…" maxLength={80} {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <div className="grid grid-cols-2 gap-4">
                           <FormField control={expForm.control} name="amount" render={({ field }) => (
@@ -500,7 +500,7 @@ export default function Finance() {
                         <FormField control={expForm.control} name="category" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <FormControl><Input className="bg-background" placeholder="e.g. Food, Travel, Health…" {...field} /></FormControl>
+                            <FormControl><Input className="bg-background" placeholder="e.g. Food, Travel, Health…" maxLength={50} {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -847,7 +847,7 @@ export default function Finance() {
                     <Form {...subForm}>
                       <form onSubmit={subForm.handleSubmit(d => createSub({ data: { ...d, nextBillingDate: new Date(d.nextBillingDate).toISOString() } }))} className="space-y-4">
                         <FormField control={subForm.control} name="name" render={({ field }) => (
-                          <FormItem><FormLabel>Service Name</FormLabel><FormControl><Input className="bg-background" {...field} /></FormControl></FormItem>
+                          <FormItem><FormLabel>Service Name</FormLabel><FormControl><Input className="bg-background" maxLength={80} {...field} /></FormControl></FormItem>
                         )} />
                         <div className="grid grid-cols-2 gap-4">
                           <FormField control={subForm.control} name="amount" render={({ field }) => (
@@ -873,7 +873,7 @@ export default function Finance() {
                           <FormField control={subForm.control} name="category" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category</FormLabel>
-                              <FormControl><Input className="bg-background" placeholder="e.g. Streaming, Software…" {...field} /></FormControl>
+                              <FormControl><Input className="bg-background" placeholder="e.g. Streaming, Software…" maxLength={50} {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
@@ -987,7 +987,7 @@ export default function Finance() {
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input className="bg-background pl-9" placeholder="e.g. John, Acme Corp…" {...field} />
+                                <Input className="bg-background pl-9" placeholder="e.g. John, Acme Corp…" maxLength={60} {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />
@@ -996,7 +996,7 @@ export default function Finance() {
                         <FormField control={owedForm.control} name="description" render={({ field }) => (
                           <FormItem>
                             <FormLabel>What for?</FormLabel>
-                            <FormControl><Input className="bg-background" placeholder="e.g. Freelance invoice, split dinner…" {...field} /></FormControl>
+                            <FormControl><Input className="bg-background" placeholder="e.g. Freelance invoice, split dinner…" maxLength={150} {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -1023,7 +1023,7 @@ export default function Finance() {
                         <FormField control={owedForm.control} name="notes" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Notes <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                            <FormControl><Input className="bg-background" placeholder="Any extra details…" {...field} /></FormControl>
+                            <FormControl><Input className="bg-background" placeholder="Any extra details…" maxLength={250} {...field} /></FormControl>
                           </FormItem>
                         )} />
                         <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={createOwedMutation.isPending}>
@@ -1199,7 +1199,7 @@ export default function Finance() {
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input className="bg-background pl-9" placeholder="e.g. John, Acme Corp…" {...field} />
+                                <Input className="bg-background pl-9" placeholder="e.g. John, Acme Corp…" maxLength={60} {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />
@@ -1208,7 +1208,7 @@ export default function Finance() {
                         <FormField control={owedToOthersForm.control} name="description" render={({ field }) => (
                           <FormItem>
                             <FormLabel>What for?</FormLabel>
-                            <FormControl><Input className="bg-background" placeholder="e.g. Rent, borrowed money…" {...field} /></FormControl>
+                            <FormControl><Input className="bg-background" placeholder="e.g. Rent, borrowed money…" maxLength={150} {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -1232,7 +1232,7 @@ export default function Finance() {
                         <FormField control={owedToOthersForm.control} name="notes" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Notes <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                            <FormControl><Input className="bg-background" placeholder="Any extra details…" {...field} /></FormControl>
+                            <FormControl><Input className="bg-background" placeholder="Any extra details…" maxLength={250} {...field} /></FormControl>
                           </FormItem>
                         )} />
                         <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white" disabled={createOwedToOthersMutation.isPending}>
@@ -1395,7 +1395,7 @@ export default function Finance() {
                     <Form {...savingsForm}>
                       <form onSubmit={savingsForm.handleSubmit(d => createSavingsMutation.mutate({ name: d.name, targetAmount: d.targetAmount, currentAmount: d.currentAmount ?? 0, notes: d.notes ?? null }))} className="space-y-4">
                         <FormField control={savingsForm.control} name="name" render={({ field }) => (
-                          <FormItem><FormLabel>Goal Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Emergency Fund, Vacation…" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem><FormLabel>Goal Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Emergency Fund, Vacation…" maxLength={80} {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <div className="grid grid-cols-2 gap-4">
                           <FormField control={savingsForm.control} name="targetAmount" render={({ field }) => (
@@ -1406,7 +1406,7 @@ export default function Finance() {
                           )} />
                         </div>
                         <FormField control={savingsForm.control} name="notes" render={({ field }) => (
-                          <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" placeholder="Why you're saving…" {...field} /></FormControl></FormItem>
+                          <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" placeholder="Why you're saving…" maxLength={250} {...field} /></FormControl></FormItem>
                         )} />
                         <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={createSavingsMutation.isPending}>
                           {createSavingsMutation.isPending ? "Saving…" : "Create Goal"}
@@ -1546,10 +1546,10 @@ export default function Finance() {
                             <form onSubmit={investForm.handleSubmit(d => createInvestmentMutation.mutate({ name: d.name, type: d.type, ticker: d.ticker || null, quantity: d.quantity, purchasePrice: d.purchasePrice, currentPrice: d.currentPrice, notes: d.notes || null }))} className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
                                 <FormField control={investForm.control} name="name" render={({ field }) => (
-                                  <FormItem><FormLabel>Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Apple Inc." {...field} /></FormControl><FormMessage /></FormItem>
+                                  <FormItem><FormLabel>Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Apple Inc." maxLength={80} {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={investForm.control} name="ticker" render={({ field }) => (
-                                  <FormItem><FormLabel>Ticker / Symbol</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. AAPL" {...field} /></FormControl></FormItem>
+                                  <FormItem><FormLabel>Ticker / Symbol</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. AAPL" maxLength={12} {...field} /></FormControl></FormItem>
                                 )} />
                               </div>
                               <FormField control={investForm.control} name="type" render={({ field }) => (
@@ -1581,7 +1581,7 @@ export default function Finance() {
                                 )} />
                               </div>
                               <FormField control={investForm.control} name="notes" render={({ field }) => (
-                                <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" {...field} /></FormControl></FormItem>
+                                <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" maxLength={250} {...field} /></FormControl></FormItem>
                               )} />
                               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={createInvestmentMutation.isPending}>
                                 {createInvestmentMutation.isPending ? "Adding…" : "Add Investment"}

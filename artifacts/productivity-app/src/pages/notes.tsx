@@ -214,7 +214,7 @@ function InlineCreate({ onSave }: { onSave: (data: Partial<Note>) => void }) {
     <div ref={wrapperRef} className={`rounded-2xl border shadow-lg transition-all duration-200 max-w-2xl mx-auto mb-8 overflow-hidden ${col.bg} ${col.border}`}>
       {expanded ? (
         <div>
-          <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
+          <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" maxLength={150}
             className="w-full bg-transparent px-4 pt-3 pb-1 text-sm font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none" />
           <div className="px-3 pb-2">
             <RichEditorWithRef ref={editorRef} placeholder="Take a note…" minHeight="100px" />
@@ -311,7 +311,7 @@ function NoteCard({ note, onUpdate, onDelete }: {
         <DialogContent className={`border shadow-2xl max-w-2xl max-h-[85vh] flex flex-col ${col.bg} ${col.border}`}>
           <DialogHeader>
             <div className="flex items-center justify-between mb-2">
-              <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title"
+              <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title" maxLength={150}
                 className="bg-transparent text-base font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none flex-1 mr-3" />
               <div className="flex items-center gap-1 shrink-0">
                 <ColorPicker current={note.color} onChange={(c) => onUpdate(note.id, { color: c })} />

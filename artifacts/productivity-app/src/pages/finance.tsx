@@ -14,7 +14,8 @@ import {
   Plus, Trash2, TrendingDown, TrendingUp, RefreshCw,
   ArrowDownLeft, ArrowUpRight, Banknote, Clock, CheckCircle2, User,
 } from "lucide-react";
-import { format, isPast } from "date-fns";
+import { format, isPast, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -224,6 +225,36 @@ export default function Finance() {
   const totalIPaid     = owedToOthers.filter(o => o.status === "paid").reduce((s, o) => s + o.amount, 0);
   const overdueIOwe    = owedToOthers.filter(o => o.status === "pending" && o.dueDate && isPast(new Date(o.dueDate)));
 
+  /* ── Monthly breakdown ── */
+  const now = new Date();
+  const monthInterval = { start: startOfMonth(now), end: endOfMonth(now) };
+  const thisMonthExpenses = expenses.filter(e =>
+    (e as any).type !== "income" && isWithinInterval(new Date(e.date), monthInterval)
+  );
+  const thisMonthIncome = expenses.filter(e =>
+    (e as any).type === "income" && isWithinInterval(new Date(e.date), monthInterval)
+  );
+
+  const expByCategoryMap: Record<string, number> = {};
+  thisMonthExpenses.forEach(e => {
+    const cat = e.category || "Uncategorised";
+    expByCategoryMap[cat] = (expByCategoryMap[cat] || 0) + e.amount;
+  });
+  const expCategoryData = Object.entries(expByCategoryMap)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const incomeByCategoryMap: Record<string, number> = {};
+  thisMonthIncome.forEach(e => {
+    const cat = e.category || "Uncategorised";
+    incomeByCategoryMap[cat] = (incomeByCategoryMap[cat] || 0) + e.amount;
+  });
+  const incomeCategoryData = Object.entries(incomeByCategoryMap)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const CHART_COLORS = ["#10b981","#3b82f6","#f59e0b","#ec4899","#8b5cf6","#ef4444","#06b6d4","#84cc16","#f97316","#a855f7"];
+
   /* ═══════════════════════════════════════════════════════════════════ */
   return (
     <Layout>
@@ -348,6 +379,105 @@ export default function Finance() {
                 </Dialog>
               </Card>
             </div>
+
+            {/* ── Monthly Breakdown ───────────────────────────────────── */}
+            {(expCategoryData.length > 0 || incomeCategoryData.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Expense donut */}
+                <Card className="bg-card border-border/50 shadow-lg p-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                    {format(now, "MMMM")} — Expenses by Category
+                  </h3>
+                  {expCategoryData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No expenses this month</p>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={expCategoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={95}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {expCategoryData.map((_, i) => (
+                              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(v: number) => [`$${v.toFixed(2)}`, "Amount"]}
+                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 12 }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-col gap-1.5">
+                        {expCategoryData.map((item, i) => {
+                          const total = expCategoryData.reduce((s, d) => s + d.value, 0);
+                          const pct = total > 0 ? (item.value / total * 100).toFixed(0) : "0";
+                          return (
+                            <div key={item.name} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                <span className="truncate text-foreground">{item.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                                <span className="text-muted-foreground text-xs">{pct}%</span>
+                                <span className="font-semibold text-foreground">${item.value.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                {/* Income sources */}
+                <Card className="bg-card border-border/50 shadow-lg p-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                    {format(now, "MMMM")} — Income Sources
+                  </h3>
+                  {incomeCategoryData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No income logged this month</p>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {/* Top source highlight */}
+                      <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-emerald-400 font-medium uppercase tracking-wide mb-0.5">Top Source</p>
+                          <p className="text-lg font-bold text-foreground">{incomeCategoryData[0].name}</p>
+                        </div>
+                        <p className="text-2xl font-display font-bold text-emerald-400">${incomeCategoryData[0].value.toFixed(2)}</p>
+                      </div>
+                      {/* All sources */}
+                      <div className="flex flex-col gap-2">
+                        {incomeCategoryData.map((item, i) => {
+                          const total = incomeCategoryData.reduce((s, d) => s + d.value, 0);
+                          const pct = total > 0 ? item.value / total * 100 : 0;
+                          return (
+                            <div key={item.name} className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-foreground font-medium">{item.name}</span>
+                                <span className="text-emerald-400 font-semibold">+${item.value.toFixed(2)}</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-emerald-500"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            )}
 
             <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-x-auto">

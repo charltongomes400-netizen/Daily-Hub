@@ -353,7 +353,7 @@ export default function Finance() {
                               <FormControl>
                                 <div className="relative">
                                   <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${watchType === "income" ? "text-emerald-400" : "text-destructive"}`}>{watchType === "income" ? "+" : "−"}</span>
-                                  <Input type="number" step="0.01" className="bg-background pl-7" {...field} />
+                                  <Input type="number" step="0.01" min="0" className="bg-background pl-7" {...field} />
                                 </div>
                               </FormControl>
                               <FormMessage />
@@ -559,7 +559,7 @@ export default function Finance() {
                         )} />
                         <div className="grid grid-cols-2 gap-4">
                           <FormField control={subForm.control} name="amount" render={({ field }) => (
-                            <FormItem><FormLabel>Amount ($)</FormLabel><FormControl><Input type="number" step="0.01" className="bg-background" {...field} /></FormControl></FormItem>
+                            <FormItem><FormLabel>Amount ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" {...field} /></FormControl></FormItem>
                           )} />
                           <FormField control={subForm.control} name="billingCycle" render={({ field }) => (
                             <FormItem>
@@ -709,7 +709,7 @@ export default function Finance() {
                               <FormControl>
                                 <div className="relative">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm text-emerald-400">+</span>
-                                  <Input type="number" step="0.01" className="bg-background pl-7" {...field} />
+                                  <Input type="number" step="0.01" min="0" className="bg-background pl-7" {...field} />
                                 </div>
                               </FormControl>
                               <FormMessage />

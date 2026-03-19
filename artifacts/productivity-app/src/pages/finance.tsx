@@ -408,8 +408,10 @@ export default function Finance() {
                             ))}
                           </Pie>
                           <Tooltip
-                            formatter={(v: number) => [`$${v.toFixed(2)}`, "Amount"]}
-                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 12 }}
+                            formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
+                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 13, padding: "8px 12px" }}
+                            itemStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                            labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: 11, marginBottom: 2 }}
                           />
                         </PieChart>
                       </ResponsiveContainer>

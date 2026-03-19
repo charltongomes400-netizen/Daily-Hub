@@ -795,7 +795,7 @@ export default function Finance() {
                             <FormItem>
                               <FormLabel>Amount ($)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" className="bg-background" {...field} />
+                                <Input type="number" step="0.01" min="0" className="bg-background" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

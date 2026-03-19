@@ -9,6 +9,7 @@ export const owedTable = pgTable("owed", {
   dueDate: timestamp("due_date"),
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
+  type: text("type").notNull().default("received"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

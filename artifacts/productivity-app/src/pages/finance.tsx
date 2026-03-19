@@ -62,8 +62,9 @@ interface OwedEntry {
   amount: number;
   description: string;
   dueDate: string | null;
-  status: "pending" | "received";
+  status: "pending" | "received" | "paid";
   notes: string | null;
+  type: "received" | "sent";
   createdAt: string;
 }
 
@@ -76,6 +77,9 @@ async function createOwed(data: Omit<OwedEntry, "id" | "createdAt" | "status">):
   const r = await fetch("/api/owed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   if (!r.ok) throw new Error("Failed to create owed entry");
   return r.json();
+}
+async function createOwedToOthers(data: Omit<OwedEntry, "id" | "createdAt" | "status">): Promise<OwedEntry> {
+  return createOwed({ ...data, type: "sent" });
 }
 async function updateOwed(id: number, data: Partial<OwedEntry>): Promise<OwedEntry> {
   const r = await fetch(`/api/owed/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
@@ -92,6 +96,7 @@ export default function Finance() {
   const [isExpOpen, setIsExpOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [isOwedOpen, setIsOwedOpen] = useState(false);
+  const [isOwedToOthersOpen, setIsOwedToOthersOpen] = useState(false);
 
   /* ── Expenses ── */
   const { data: expenses = [], isLoading: loadExp } = useGetExpenses();
@@ -131,6 +136,10 @@ export default function Finance() {
     mutationFn: deleteOwed,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/owed"] }),
   });
+  const createOwedToOthersMutation = useMutation({
+    mutationFn: createOwedToOthers,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/owed"] }); setIsOwedToOthersOpen(false); owedToOthersForm.reset(); },
+  });
 
   /* ── Forms ── */
   const expForm = useForm<z.infer<typeof expenseSchema>>({
@@ -142,6 +151,10 @@ export default function Finance() {
     defaultValues: { name: "", amount: 0, billingCycle: "monthly", category: "", nextBillingDate: format(new Date(), 'yyyy-MM-dd') }
   });
   const owedForm = useForm<z.infer<typeof owedSchema>>({
+    resolver: zodResolver(owedSchema),
+    defaultValues: { fromName: "", amount: 0, description: "", dueDate: "", notes: "" },
+  });
+  const owedToOthersForm = useForm<z.infer<typeof owedSchema>>({
     resolver: zodResolver(owedSchema),
     defaultValues: { fromName: "", amount: 0, description: "", dueDate: "", notes: "" },
   });
@@ -159,9 +172,16 @@ export default function Finance() {
     return sum;
   }, 0);
 
-  const totalOwed      = owedList.filter(o => o.status === "pending").reduce((s, o) => s + o.amount, 0);
-  const totalReceived  = owedList.filter(o => o.status === "received").reduce((s, o) => s + o.amount, 0);
-  const overdueOwed    = owedList.filter(o => o.status === "pending" && o.dueDate && isPast(new Date(o.dueDate)));
+  const owedToMe      = owedList.filter(o => !o.type || o.type === "received");
+  const owedToOthers  = owedList.filter(o => o.type === "sent");
+
+  const totalOwed      = owedToMe.filter(o => o.status === "pending").reduce((s, o) => s + o.amount, 0);
+  const totalReceived  = owedToMe.filter(o => o.status === "received").reduce((s, o) => s + o.amount, 0);
+  const overdueOwed    = owedToMe.filter(o => o.status === "pending" && o.dueDate && isPast(new Date(o.dueDate)));
+
+  const totalIOwe      = owedToOthers.filter(o => o.status === "pending").reduce((s, o) => s + o.amount, 0);
+  const totalIPaid     = owedToOthers.filter(o => o.status === "paid").reduce((s, o) => s + o.amount, 0);
+  const overdueIOwe    = owedToOthers.filter(o => o.status === "pending" && o.dueDate && isPast(new Date(o.dueDate)));
 
   /* ═══════════════════════════════════════════════════════════════════ */
   return (
@@ -173,14 +193,22 @@ export default function Finance() {
         </div>
 
         <Tabs defaultValue="expenses" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full max-w-lg grid-cols-3 bg-secondary/50 p-1 mb-8">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-secondary/50 p-1 mb-8">
             <TabsTrigger value="expenses"      className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
             <TabsTrigger value="subscriptions" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Subscriptions</TabsTrigger>
             <TabsTrigger value="owed"          className="data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
               Owed to Me
-              {owedList.filter(o => o.status === "pending").length > 0 && (
+              {owedToMe.filter(o => o.status === "pending").length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-[10px] font-bold text-white flex items-center justify-center">
-                  {owedList.filter(o => o.status === "pending").length}
+                  {owedToMe.filter(o => o.status === "pending").length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="owed-to-others" className="data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
+              Owed to Others
+              {owedToOthers.filter(o => o.status === "pending").length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-[10px] font-bold text-white flex items-center justify-center">
+                  {owedToOthers.filter(o => o.status === "pending").length}
                 </span>
               )}
             </TabsTrigger>
@@ -559,7 +587,7 @@ export default function Finance() {
                   <tbody>
                     {loadOwed ? (
                       <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground animate-pulse">Loading...</td></tr>
-                    ) : owedList.length === 0 ? (
+                    ) : owedToMe.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center gap-3">
@@ -572,7 +600,7 @@ export default function Finance() {
                         </td>
                       </tr>
                     ) : (
-                      [...owedList]
+                      [...owedToMe]
                         .sort((a, b) => {
                           if (a.status !== b.status) return a.status === "pending" ? -1 : 1;
                           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -629,6 +657,216 @@ export default function Finance() {
                                       onClick={() => updateOwedMutation.mutate({ id: entry.id, data: { status: "received" } })}
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" />Mark received
+                                    </Button>
+                                  )}
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={deleteOwedMutation.isPending} onClick={() => deleteOwedMutation.mutate(entry.id)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ── OWED TO OTHERS TAB ────────────────────────────────────────── */}
+          <TabsContent value="owed-to-others" className="flex-1 flex flex-col m-0 outline-none">
+            {/* Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">I Owe</p>
+                  <h2 className="text-2xl font-display font-bold text-orange-400 mt-0.5">${totalIOwe.toFixed(2)}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                  <Banknote className="w-5 h-5 text-orange-400" />
+                </div>
+              </Card>
+              <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Paid</p>
+                  <h2 className="text-2xl font-display font-bold text-foreground mt-0.5">${totalIPaid.toFixed(2)}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                </div>
+              </Card>
+              <Card className={`border-border/50 shadow-lg flex items-center justify-between p-5 ${overdueIOwe.length > 0 ? "bg-destructive/5 border-destructive/20" : "bg-card"}`}>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Overdue</p>
+                  <h2 className={`text-2xl font-display font-bold mt-0.5 ${overdueIOwe.length > 0 ? "text-destructive" : "text-foreground"}`}>
+                    {overdueIOwe.length}
+                  </h2>
+                </div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${overdueIOwe.length > 0 ? "bg-destructive/10" : "bg-secondary"}`}>
+                  <Clock className={`w-5 h-5 ${overdueIOwe.length > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+                </div>
+              </Card>
+              <Card className="bg-card border-border/50 shadow-lg p-4 flex flex-col justify-center">
+                <Dialog open={isOwedToOthersOpen} onOpenChange={setIsOwedToOthersOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full h-full py-5 bg-orange-600 hover:bg-orange-500 text-white hover-elevate border-0 shadow-lg shadow-orange-600/20">
+                      <Plus className="w-5 h-5 mr-2" />Add Entry
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-card border-border/50 shadow-2xl">
+                    <DialogHeader><DialogTitle>Track Money I Owe to Others</DialogTitle></DialogHeader>
+                    <Form {...owedToOthersForm}>
+                      <form onSubmit={owedToOthersForm.handleSubmit(d => createOwedToOthersMutation.mutate({
+                        fromName: d.fromName,
+                        amount: d.amount,
+                        description: d.description,
+                        dueDate: d.dueDate ? new Date(d.dueDate).toISOString() : null,
+                        notes: d.notes || null,
+                        type: "sent",
+                      }))} className="space-y-4">
+                        <FormField control={owedToOthersForm.control} name="fromName" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>To (Person / Company)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input className="bg-background pl-9" placeholder="e.g. John, Acme Corp…" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={owedToOthersForm.control} name="description" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>What for?</FormLabel>
+                            <FormControl><Input className="bg-background" placeholder="e.g. Rent, borrowed money…" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={owedToOthersForm.control} name="amount" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Amount ($)</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm text-orange-400">−</span>
+                                  <Input type="number" step="0.01" className="bg-background pl-7" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          <FormField control={owedToOthersForm.control} name="dueDate" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Due Date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                              <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                            </FormItem>
+                          )} />
+                        </div>
+                        <FormField control={owedToOthersForm.control} name="notes" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Notes <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                            <FormControl><Input className="bg-background" placeholder="Any extra details…" {...field} /></FormControl>
+                          </FormItem>
+                        )} />
+                        <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white" disabled={createOwedToOthersMutation.isPending}>
+                          {createOwedToOthersMutation.isPending ? "Saving..." : "Add Entry"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </Card>
+            </div>
+
+            {/* List */}
+            <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-lg">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-muted-foreground uppercase bg-secondary/50 border-b border-border/50">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">To</th>
+                      <th className="px-6 py-4 font-medium">What For</th>
+                      <th className="px-6 py-4 font-medium">Due Date</th>
+                      <th className="px-6 py-4 font-medium text-right">Amount</th>
+                      <th className="px-6 py-4 font-medium text-center">Status</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadOwed ? (
+                      <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground animate-pulse">Loading...</td></tr>
+                    ) : owedToOthers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-16 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center">
+                              <Banknote className="w-6 h-6 text-muted-foreground/40" />
+                            </div>
+                            <p className="text-muted-foreground font-medium">No entries yet</p>
+                            <p className="text-xs text-muted-foreground/60">Track money you owe to others.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      [...owedToOthers]
+                        .sort((a, b) => {
+                          if (a.status !== b.status) return a.status === "pending" ? -1 : 1;
+                          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                        })
+                        .map(entry => {
+                          const isOverdue = entry.status === "pending" && entry.dueDate && isPast(new Date(entry.dueDate));
+                          return (
+                            <tr key={entry.id} className={`border-b border-border/30 transition-colors ${entry.status === "paid" ? "opacity-50" : "hover:bg-secondary/20"} ${isOverdue ? "bg-destructive/5" : ""}`}>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-orange-500/15 flex items-center justify-center shrink-0">
+                                    <User className="w-3.5 h-3.5 text-orange-400" />
+                                  </div>
+                                  <span className="font-semibold text-foreground">{entry.fromName}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-muted-foreground">
+                                <div>
+                                  <p className="text-foreground">{entry.description}</p>
+                                  {entry.notes && <p className="text-xs text-muted-foreground/70 mt-0.5 italic">{entry.notes}</p>}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                {entry.dueDate ? (
+                                  <span className={`text-sm ${isOverdue ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                                    {isOverdue && <span className="mr-1">⚠</span>}
+                                    {format(new Date(entry.dueDate), 'MMM dd, yyyy')}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/40 text-sm">—</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span className="text-orange-400 font-semibold">−${entry.amount.toFixed(2)}</span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                {entry.status === "paid" ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                    <CheckCircle2 className="w-3 h-3" />Paid
+                                  </span>
+                                ) : (
+                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${isOverdue ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"}`}>
+                                    <Clock className="w-3 h-3" />{isOverdue ? "Overdue" : "Pending"}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center justify-end gap-1">
+                                  {entry.status === "pending" && (
+                                    <Button
+                                      variant="ghost" size="sm"
+                                      className="h-8 text-xs text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 gap-1"
+                                      disabled={updateOwedMutation.isPending}
+                                      onClick={() => updateOwedMutation.mutate({ id: entry.id, data: { status: "paid" } })}
+                                    >
+                                      <CheckCircle2 className="w-3.5 h-3.5" />Mark paid
                                     </Button>
                                   )}
                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={deleteOwedMutation.isPending} onClick={() => deleteOwedMutation.mutate(entry.id)}>

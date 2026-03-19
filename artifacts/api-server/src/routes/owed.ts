@@ -15,15 +15,17 @@ const CreateOwedBody = z.object({
   description: z.string().min(1),
   dueDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  type: z.enum(["received", "sent"]).default("received"),
 });
 
 const UpdateOwedBody = z.object({
-  status: z.enum(["pending", "received"]).optional(),
+  status: z.enum(["pending", "received", "paid"]).optional(),
   fromName: z.string().min(1).optional(),
   amount: z.coerce.number().positive().optional(),
   description: z.string().min(1).optional(),
   dueDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  type: z.enum(["received", "sent"]).optional(),
 });
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
@@ -59,6 +61,7 @@ router.post("/", async (req, res) => {
       description: body.description,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       notes: body.notes ?? null,
+      type: body.type,
     })
     .returning();
   res.status(201).json(serialize(row));
@@ -75,6 +78,7 @@ router.patch("/:id", async (req, res) => {
   if (body.description !== undefined) updates.description = body.description;
   if (body.notes !== undefined)       updates.notes = body.notes;
   if (body.dueDate !== undefined)     updates.dueDate = body.dueDate ? new Date(body.dueDate) : null;
+  if (body.type !== undefined)        updates.type = body.type;
   const [row] = await db
     .update(owedTable)
     .set(updates)

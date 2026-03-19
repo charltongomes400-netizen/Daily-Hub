@@ -386,6 +386,17 @@ export default function Tasks() {
     defaultValues: { name: "", color: "blue", icon: "tag" },
   });
 
+  /* auto-open new list dialog when navigated from goals */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const newList = params.get("newList");
+    if (newList) {
+      catForm.setValue("name", decodeURIComponent(newList));
+      setIsCatOpen(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   /* submit handlers */
   const onSubmitTask = (data: z.infer<typeof taskSchema>) => {
     createTask({ data: {

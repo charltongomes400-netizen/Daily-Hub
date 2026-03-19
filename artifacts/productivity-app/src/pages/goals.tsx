@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticDebounce } from "@/hooks/useOptimisticDebounce";
@@ -107,12 +108,13 @@ function ProgressRing({ value, size = 80, stroke = 6 }: { value: number; size?: 
 }
 
 /* ── Goal card ──────────────────────────────────────────────── */
-function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
+function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }: {
   goal: Goal;
   onProgress: (id: number, p: number) => void;
   onComplete: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit: (goal: Goal) => void;
+  onAddTasks: (title: string) => void;
 }) {
   const isTaskSynced = goal.category === "__tasks__";
   const daysLeft = goal.targetDate
@@ -212,6 +214,19 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
           )}
         </div>
       </div>
+
+      {/* Add Tasks button */}
+      {!isTaskSynced && (
+        <div className="mt-3 pt-3 border-t border-border/20">
+          <button
+            onClick={() => onAddTasks(goal.title)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-blue-400 hover:bg-blue-500/8 px-2.5 py-1.5 rounded-lg transition-colors w-full justify-center border border-dashed border-border/40 hover:border-blue-500/30"
+          >
+            <ListTodo className="w-3.5 h-3.5" />
+            Add Tasks
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -219,6 +234,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
 /* ═════════════════════════════════════════════════════════════════ */
 export default function Goals() {
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [isEditingQuote, setIsEditingQuote] = useState(false);
@@ -477,6 +493,7 @@ export default function Goals() {
                       onComplete={(id) => updateMutation.mutate({ id, data: { status: "completed", progress: 100 } })}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onEdit={handleEditGoal}
+                      onAddTasks={(title) => navigate(`/tasks?newList=${encodeURIComponent(title)}`)}
                     />
                   ))
                 )}

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, TrendingDown, TrendingUp, RefreshCw,
   ArrowDownLeft, ArrowUpRight, Banknote, Clock, CheckCircle2, User,
+  Target, PiggyBank, BarChart3, Edit2,
 } from "lucide-react";
 import { format, isPast, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -53,6 +54,61 @@ const owedSchema = z.object({
   dueDate: z.string().optional(),
   notes: z.string().optional(),
 });
+
+const savingsSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  targetAmount: z.coerce.number().min(0.01, "Target must be > 0"),
+  currentAmount: z.coerce.number().min(0, "Amount can't be negative").default(0),
+  notes: z.string().optional(),
+});
+
+const addFundsSchema = z.object({
+  amount: z.coerce.number().min(0.01, "Amount must be > 0"),
+});
+
+const investmentSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["stock", "crypto", "etf", "real_estate", "fund", "other"]),
+  ticker: z.string().optional(),
+  quantity: z.coerce.number().min(0, "Can't be negative").default(0),
+  purchasePrice: z.coerce.number().min(0, "Can't be negative"),
+  currentPrice: z.coerce.number().min(0, "Can't be negative"),
+  notes: z.string().optional(),
+});
+
+const updatePriceSchema = z.object({
+  currentPrice: z.coerce.number().min(0, "Can't be negative"),
+});
+
+/* ── Savings API ──────────────────────────────────────────────────── */
+interface SavingsEntry { id: number; userId: string | null; name: string; targetAmount: number; currentAmount: number; notes: string | null; createdAt: string; }
+async function fetchSavings(): Promise<SavingsEntry[]> { const r = await fetch("/api/savings"); if (!r.ok) throw new Error("Failed"); return r.json(); }
+async function createSavings(d: Omit<SavingsEntry,"id"|"createdAt"|"userId">): Promise<SavingsEntry> {
+  const r = await fetch("/api/savings", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(d) });
+  if (!r.ok) throw new Error("Failed to create");
+  return r.json();
+}
+async function patchSavings(id: number, d: Partial<SavingsEntry>): Promise<SavingsEntry> {
+  const r = await fetch(`/api/savings/${id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify(d) });
+  if (!r.ok) throw new Error("Failed to update");
+  return r.json();
+}
+async function deleteSavings(id: number): Promise<void> { await fetch(`/api/savings/${id}`, { method:"DELETE" }); }
+
+/* ── Investments API ──────────────────────────────────────────────── */
+interface InvestmentEntry { id: number; userId: string | null; name: string; type: string; ticker: string | null; quantity: number; purchasePrice: number; currentPrice: number; notes: string | null; createdAt: string; }
+async function fetchInvestments(): Promise<InvestmentEntry[]> { const r = await fetch("/api/investments"); if (!r.ok) throw new Error("Failed"); return r.json(); }
+async function createInvestment(d: Omit<InvestmentEntry,"id"|"createdAt"|"userId">): Promise<InvestmentEntry> {
+  const r = await fetch("/api/investments", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(d) });
+  if (!r.ok) throw new Error("Failed to create");
+  return r.json();
+}
+async function patchInvestment(id: number, d: Partial<InvestmentEntry>): Promise<InvestmentEntry> {
+  const r = await fetch(`/api/investments/${id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify(d) });
+  if (!r.ok) throw new Error("Failed to update");
+  return r.json();
+}
+async function deleteInvestment(id: number): Promise<void> { await fetch(`/api/investments/${id}`, { method:"DELETE" }); }
 
 /* ── Owed API ─────────────────────────────────────────────────────── */
 interface OwedEntry {
@@ -111,6 +167,10 @@ export default function Finance() {
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [isOwedOpen, setIsOwedOpen] = useState(false);
   const [isOwedToOthersOpen, setIsOwedToOthersOpen] = useState(false);
+  const [isSavingsOpen, setIsSavingsOpen] = useState(false);
+  const [addFundsTarget, setAddFundsTarget] = useState<SavingsEntry | null>(null);
+  const [isInvestOpen, setIsInvestOpen] = useState(false);
+  const [updatePriceTarget, setUpdatePriceTarget] = useState<InvestmentEntry | null>(null);
 
   /* ── Expenses ── */
   const { data: expenses = [], isLoading: loadExp } = useGetExpenses();
@@ -183,6 +243,41 @@ export default function Finance() {
     },
   });
 
+  /* ── Savings ── */
+  const { data: savingsList = [], isLoading: loadSavings } = useQuery({ queryKey: ["/api/savings"], queryFn: fetchSavings });
+  const createSavingsMutation = useMutation({
+    mutationFn: createSavings,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/savings"] }); setIsSavingsOpen(false); savingsForm.reset(); toast({ title: "Goal created" }); },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+  const addFundsMutation = useMutation({
+    mutationFn: ({ id, extra }: { id: number; extra: number; current: number }) =>
+      patchSavings(id, { currentAmount: extra }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/savings"] }); setAddFundsTarget(null); addFundsForm.reset(); toast({ title: "Funds added" }); },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+  const deleteSavingsMutation = useMutation({
+    mutationFn: deleteSavings,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/savings"] }),
+  });
+
+  /* ── Investments ── */
+  const { data: investmentsList = [], isLoading: loadInvest } = useQuery({ queryKey: ["/api/investments"], queryFn: fetchInvestments });
+  const createInvestmentMutation = useMutation({
+    mutationFn: createInvestment,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/investments"] }); setIsInvestOpen(false); investForm.reset(); toast({ title: "Investment added" }); },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+  const updatePriceMutation = useMutation({
+    mutationFn: ({ id, currentPrice }: { id: number; currentPrice: number }) => patchInvestment(id, { currentPrice }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/investments"] }); setUpdatePriceTarget(null); updatePriceForm.reset(); toast({ title: "Price updated" }); },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+  const deleteInvestmentMutation = useMutation({
+    mutationFn: deleteInvestment,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/investments"] }),
+  });
+
   /* ── Forms ── */
   const expForm = useForm<z.infer<typeof expenseSchema>>({
     resolver: zodResolver(expenseSchema),
@@ -199,6 +294,22 @@ export default function Finance() {
   const owedToOthersForm = useForm<z.infer<typeof owedSchema>>({
     resolver: zodResolver(owedSchema),
     defaultValues: { fromName: "", amount: 0, description: "", dueDate: "", notes: "" },
+  });
+  const savingsForm = useForm<z.infer<typeof savingsSchema>>({
+    resolver: zodResolver(savingsSchema),
+    defaultValues: { name: "", targetAmount: 0, currentAmount: 0, notes: "" },
+  });
+  const addFundsForm = useForm<z.infer<typeof addFundsSchema>>({
+    resolver: zodResolver(addFundsSchema),
+    defaultValues: { amount: 0 },
+  });
+  const investForm = useForm<z.infer<typeof investmentSchema>>({
+    resolver: zodResolver(investmentSchema),
+    defaultValues: { name: "", type: "stock", ticker: "", quantity: 0, purchasePrice: 0, currentPrice: 0, notes: "" },
+  });
+  const updatePriceForm = useForm<z.infer<typeof updatePriceSchema>>({
+    resolver: zodResolver(updatePriceSchema),
+    defaultValues: { currentPrice: 0 },
   });
 
   /* ── Derived values ── */
@@ -265,7 +376,7 @@ export default function Finance() {
         </div>
 
         <Tabs defaultValue="expenses" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-secondary/50 p-1 mb-8">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6 bg-secondary/50 p-1 mb-8">
             <TabsTrigger value="expenses"      className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
             <TabsTrigger value="subscriptions" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Subscriptions</TabsTrigger>
             <TabsTrigger value="owed"          className="data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
@@ -284,6 +395,8 @@ export default function Finance() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="savings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Savings</TabsTrigger>
+            <TabsTrigger value="investments" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Investments</TabsTrigger>
           </TabsList>
 
           {/* ── EXPENSES TAB ───────────────────────────────────────────── */}
@@ -1050,6 +1163,339 @@ export default function Finance() {
               </div>
             </div>
           </TabsContent>
+          {/* ── SAVINGS TAB ────────────────────────────────────────────── */}
+          <TabsContent value="savings" className="flex-1 flex flex-col m-0 outline-none">
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Total Saved</p>
+                  <h2 className="text-2xl font-display font-bold text-emerald-400 mt-0.5">
+                    ${savingsList.reduce((s, g) => s + g.currentAmount, 0).toFixed(2)}
+                  </h2>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <PiggyBank className="w-5 h-5 text-emerald-400" />
+                </div>
+              </Card>
+              <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Total Target</p>
+                  <h2 className="text-2xl font-display font-bold text-foreground mt-0.5">
+                    ${savingsList.reduce((s, g) => s + g.targetAmount, 0).toFixed(2)}
+                  </h2>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                  <Target className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </Card>
+              <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Goals</p>
+                  <h2 className="text-2xl font-display font-bold text-foreground mt-0.5">{savingsList.length}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                  <BarChart3 className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </Card>
+              <Card className="bg-card border-border/50 shadow-lg p-4 flex flex-col justify-center">
+                <Dialog open={isSavingsOpen} onOpenChange={setIsSavingsOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full h-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-lg">
+                      <Plus className="w-5 h-5 mr-2" />New Goal
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-card border-border/50 shadow-2xl">
+                    <DialogHeader><DialogTitle>New Savings Goal</DialogTitle></DialogHeader>
+                    <Form {...savingsForm}>
+                      <form onSubmit={savingsForm.handleSubmit(d => createSavingsMutation.mutate({ name: d.name, targetAmount: d.targetAmount, currentAmount: d.currentAmount ?? 0, notes: d.notes ?? null }))} className="space-y-4">
+                        <FormField control={savingsForm.control} name="name" render={({ field }) => (
+                          <FormItem><FormLabel>Goal Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Emergency Fund, Vacation…" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={savingsForm.control} name="targetAmount" render={({ field }) => (
+                            <FormItem><FormLabel>Target ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={savingsForm.control} name="currentAmount" render={({ field }) => (
+                            <FormItem><FormLabel>Already Saved ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                        </div>
+                        <FormField control={savingsForm.control} name="notes" render={({ field }) => (
+                          <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" placeholder="Why you're saving…" {...field} /></FormControl></FormItem>
+                        )} />
+                        <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={createSavingsMutation.isPending}>
+                          {createSavingsMutation.isPending ? "Saving…" : "Create Goal"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </Card>
+            </div>
+
+            {/* Add Funds dialog */}
+            <Dialog open={!!addFundsTarget} onOpenChange={open => { if (!open) setAddFundsTarget(null); }}>
+              <DialogContent className="bg-card border-border/50 shadow-2xl">
+                <DialogHeader><DialogTitle>Add Funds — {addFundsTarget?.name}</DialogTitle></DialogHeader>
+                <Form {...addFundsForm}>
+                  <form onSubmit={addFundsForm.handleSubmit(d => {
+                    if (!addFundsTarget) return;
+                    addFundsMutation.mutate({ id: addFundsTarget.id, extra: addFundsTarget.currentAmount + d.amount, current: addFundsTarget.currentAmount });
+                  })} className="space-y-4">
+                    <p className="text-sm text-muted-foreground">Current: <span className="font-semibold text-foreground">${addFundsTarget?.currentAmount.toFixed(2)}</span> / ${addFundsTarget?.targetAmount.toFixed(2)}</p>
+                    <FormField control={addFundsForm.control} name="amount" render={({ field }) => (
+                      <FormItem><FormLabel>Amount to Add ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" autoFocus {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={addFundsMutation.isPending}>
+                      {addFundsMutation.isPending ? "Saving…" : "Add Funds"}
+                    </Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Goals list */}
+            {loadSavings ? (
+              <div className="text-center py-12 text-muted-foreground animate-pulse">Loading…</div>
+            ) : savingsList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
+                <PiggyBank className="w-12 h-12 opacity-30" />
+                <p>No savings goals yet. Create one to get started.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {savingsList.map(goal => {
+                  const pct = Math.min(100, goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0);
+                  const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
+                  const done = pct >= 100;
+                  return (
+                    <Card key={goal.id} className={`bg-card border-border/50 shadow-lg p-6 flex flex-col gap-4 ${done ? "border-emerald-500/40" : ""}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          {done && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                          <h3 className="font-semibold text-foreground text-base">{goal.name}</h3>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteSavingsMutation.mutate(goal.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      {goal.notes && <p className="text-xs text-muted-foreground -mt-2">{goal.notes}</p>}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className={`font-semibold ${done ? "text-emerald-400" : "text-foreground"}`}>{pct.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all ${done ? "bg-emerald-500" : "bg-emerald-600"}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-emerald-400 font-semibold">${goal.currentAmount.toFixed(2)} saved</span>
+                          <span className="text-muted-foreground">${goal.targetAmount.toFixed(2)} goal</span>
+                        </div>
+                        {!done && <p className="text-xs text-muted-foreground">${remaining.toFixed(2)} remaining</p>}
+                      </div>
+                      {!done && (
+                        <Button size="sm" variant="outline" className="w-full border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10" onClick={() => { setAddFundsTarget(goal); addFundsForm.reset({ amount: 0 }); }}>
+                          <Plus className="w-3.5 h-3.5 mr-1.5" />Add Funds
+                        </Button>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── INVESTMENTS TAB ─────────────────────────────────────────── */}
+          <TabsContent value="investments" className="flex-1 flex flex-col m-0 outline-none">
+            {(() => {
+              const totalCost    = investmentsList.reduce((s, i) => s + i.quantity * i.purchasePrice, 0);
+              const totalValue   = investmentsList.reduce((s, i) => s + i.quantity * i.currentPrice, 0);
+              const totalPnL     = totalValue - totalCost;
+              const pnlPct       = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+              const TYPE_LABELS: Record<string,string> = { stock:"Stock", crypto:"Crypto", etf:"ETF", real_estate:"Real Estate", fund:"Fund", other:"Other" };
+              const TYPE_COLORS: Record<string,string> = { stock:"bg-blue-500/15 text-blue-400", crypto:"bg-orange-500/15 text-orange-400", etf:"bg-violet-500/15 text-violet-400", real_estate:"bg-emerald-500/15 text-emerald-400", fund:"bg-pink-500/15 text-pink-400", other:"bg-secondary text-muted-foreground" };
+              return (
+                <>
+                  {/* Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Total Invested</p>
+                        <h2 className="text-2xl font-display font-bold text-foreground mt-0.5">${totalCost.toFixed(2)}</h2>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                        <Banknote className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    </Card>
+                    <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Current Value</p>
+                        <h2 className="text-2xl font-display font-bold text-foreground mt-0.5">${totalValue.toFixed(2)}</h2>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <BarChart3 className="w-5 h-5 text-blue-400" />
+                      </div>
+                    </Card>
+                    <Card className="bg-card border-border/50 shadow-lg flex items-center justify-between p-5">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Total P&amp;L</p>
+                        <h2 className={`text-2xl font-display font-bold mt-0.5 ${totalPnL >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+                          {totalPnL >= 0 ? "+" : ""}{totalPnL.toFixed(2)} <span className="text-sm font-normal">({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)</span>
+                        </h2>
+                      </div>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${totalPnL >= 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                        {totalPnL >= 0 ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-destructive" />}
+                      </div>
+                    </Card>
+                    <Card className="bg-card border-border/50 shadow-lg p-4 flex flex-col justify-center">
+                      <Dialog open={isInvestOpen} onOpenChange={setIsInvestOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="w-full h-full py-5 bg-blue-600 hover:bg-blue-500 text-white border-0 shadow-lg">
+                            <Plus className="w-5 h-5 mr-2" />Add Holding
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-border/50 shadow-2xl">
+                          <DialogHeader><DialogTitle>Add Investment</DialogTitle></DialogHeader>
+                          <Form {...investForm}>
+                            <form onSubmit={investForm.handleSubmit(d => createInvestmentMutation.mutate({ name: d.name, type: d.type, ticker: d.ticker || null, quantity: d.quantity, purchasePrice: d.purchasePrice, currentPrice: d.currentPrice, notes: d.notes || null }))} className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <FormField control={investForm.control} name="name" render={({ field }) => (
+                                  <FormItem><FormLabel>Name</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. Apple Inc." {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={investForm.control} name="ticker" render={({ field }) => (
+                                  <FormItem><FormLabel>Ticker / Symbol</FormLabel><FormControl><Input className="bg-background" placeholder="e.g. AAPL" {...field} /></FormControl></FormItem>
+                                )} />
+                              </div>
+                              <FormField control={investForm.control} name="type" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Type</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="stock">Stock</SelectItem>
+                                      <SelectItem value="crypto">Crypto</SelectItem>
+                                      <SelectItem value="etf">ETF</SelectItem>
+                                      <SelectItem value="fund">Fund</SelectItem>
+                                      <SelectItem value="real_estate">Real Estate</SelectItem>
+                                      <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )} />
+                              <div className="grid grid-cols-3 gap-3">
+                                <FormField control={investForm.control} name="quantity" render={({ field }) => (
+                                  <FormItem><FormLabel>Shares / Units</FormLabel><FormControl><Input type="number" step="0.000001" min="0" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={investForm.control} name="purchasePrice" render={({ field }) => (
+                                  <FormItem><FormLabel>Buy Price ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={investForm.control} name="currentPrice" render={({ field }) => (
+                                  <FormItem><FormLabel>Current Price ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                              </div>
+                              <FormField control={investForm.control} name="notes" render={({ field }) => (
+                                <FormItem><FormLabel>Notes (optional)</FormLabel><FormControl><Input className="bg-background" {...field} /></FormControl></FormItem>
+                              )} />
+                              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={createInvestmentMutation.isPending}>
+                                {createInvestmentMutation.isPending ? "Adding…" : "Add Investment"}
+                              </Button>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                    </Card>
+                  </div>
+
+                  {/* Update Price dialog */}
+                  <Dialog open={!!updatePriceTarget} onOpenChange={open => { if (!open) setUpdatePriceTarget(null); }}>
+                    <DialogContent className="bg-card border-border/50 shadow-2xl">
+                      <DialogHeader><DialogTitle>Update Price — {updatePriceTarget?.name}</DialogTitle></DialogHeader>
+                      <Form {...updatePriceForm}>
+                        <form onSubmit={updatePriceForm.handleSubmit(d => { if (!updatePriceTarget) return; updatePriceMutation.mutate({ id: updatePriceTarget.id, currentPrice: d.currentPrice }); })} className="space-y-4">
+                          <p className="text-sm text-muted-foreground">Previous: <span className="font-semibold text-foreground">${updatePriceTarget?.currentPrice.toFixed(2)}</span></p>
+                          <FormField control={updatePriceForm.control} name="currentPrice" render={({ field }) => (
+                            <FormItem><FormLabel>New Price ($)</FormLabel><FormControl><Input type="number" step="0.01" min="0" className="bg-background" autoFocus {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={updatePriceMutation.isPending}>
+                            {updatePriceMutation.isPending ? "Updating…" : "Update Price"}
+                          </Button>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Holdings table */}
+                  {loadInvest ? (
+                    <div className="text-center py-12 text-muted-foreground animate-pulse">Loading…</div>
+                  ) : investmentsList.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
+                      <BarChart3 className="w-12 h-12 opacity-30" />
+                      <p>No holdings yet. Add your first investment.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-lg">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                          <thead className="text-xs text-muted-foreground uppercase bg-secondary/50 border-b border-border/50">
+                            <tr>
+                              <th className="px-5 py-4 font-medium">Name</th>
+                              <th className="px-5 py-4 font-medium">Type</th>
+                              <th className="px-5 py-4 font-medium text-right">Qty</th>
+                              <th className="px-5 py-4 font-medium text-right">Buy Price</th>
+                              <th className="px-5 py-4 font-medium text-right">Current</th>
+                              <th className="px-5 py-4 font-medium text-right">Value</th>
+                              <th className="px-5 py-4 font-medium text-right">P&amp;L</th>
+                              <th className="px-5 py-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {investmentsList.map(inv => {
+                              const value = inv.quantity * inv.currentPrice;
+                              const cost  = inv.quantity * inv.purchasePrice;
+                              const pnl   = value - cost;
+                              const pnlP  = cost > 0 ? (pnl / cost) * 100 : 0;
+                              return (
+                                <tr key={inv.id} className="border-b border-border/30 hover:bg-secondary/20 transition-colors">
+                                  <td className="px-5 py-4">
+                                    <div className="font-semibold text-foreground">{inv.name}</div>
+                                    {inv.ticker && <div className="text-xs text-muted-foreground">{inv.ticker}</div>}
+                                  </td>
+                                  <td className="px-5 py-4">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[inv.type] ?? TYPE_COLORS.other}`}>{TYPE_LABELS[inv.type] ?? inv.type}</span>
+                                  </td>
+                                  <td className="px-5 py-4 text-right text-muted-foreground">{inv.quantity}</td>
+                                  <td className="px-5 py-4 text-right text-muted-foreground">${inv.purchasePrice.toFixed(2)}</td>
+                                  <td className="px-5 py-4 text-right font-medium text-foreground">${inv.currentPrice.toFixed(2)}</td>
+                                  <td className="px-5 py-4 text-right font-semibold text-foreground">${value.toFixed(2)}</td>
+                                  <td className={`px-5 py-4 text-right font-semibold ${pnl >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+                                    {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}<br/>
+                                    <span className="text-xs font-normal">({pnlP >= 0 ? "+" : ""}{pnlP.toFixed(1)}%)</span>
+                                  </td>
+                                  <td className="px-5 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-400" onClick={() => { setUpdatePriceTarget(inv); updatePriceForm.reset({ currentPrice: inv.currentPrice }); }}>
+                                        <Edit2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteInvestmentMutation.mutate(inv.id)}>
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </TabsContent>
+
         </Tabs>
       </div>
     </Layout>

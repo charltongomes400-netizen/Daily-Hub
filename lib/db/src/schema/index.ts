@@ -7,3 +7,5 @@ export * from "./gym";
 export * from "./owed";
 export * from "./notes";
 export * from "./goals";
+export * from "./savings";
+export * from "./investments";

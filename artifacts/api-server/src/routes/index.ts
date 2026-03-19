@@ -9,6 +9,8 @@ import gymRouter from "./gym";
 import owedRouter from "./owed";
 import notesRouter from "./notes";
 import goalsRouter from "./goals";
+import savingsRouter from "./savings";
+import investmentsRouter from "./investments";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use("/gym", gymRouter);
 router.use("/owed", owedRouter);
 router.use("/notes", notesRouter);
 router.use("/goals", goalsRouter);
+router.use("/savings", savingsRouter);
+router.use("/investments", investmentsRouter);
 
 export default router;

@@ -2,13 +2,12 @@ import { useGetTasks, useGetExpenses, useGetSubscriptions } from "@workspace/api
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Wallet, CreditCard, ArrowRight, Activity, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
+import { Wallet, ArrowRight, Dumbbell, Moon, Flame, StickyNote, Target } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { WelcomeAnimation } from "@/components/WelcomeAnimation";
-import { format, subDays, isAfter } from "date-fns";
+import { format, isAfter } from "date-fns";
 import { motion } from "framer-motion";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -75,12 +74,6 @@ export default function Dashboard() {
   const todaysExercises = gymExercises.filter(e => e.dayOfWeek === todayIndex);
   const weekTrainingDays = Array.from({ length: 7 }, (_, i) => i).filter(i => !restDaySet.has(i) && gymExercises.some(e => e.dayOfWeek === i)).length;
 
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
-  const taskProgress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-
-  const pendingHighPriority = tasks.filter(t => !t.completed && t.priority === "high").length;
-
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
@@ -90,30 +83,6 @@ export default function Dashboard() {
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     })
     .reduce((sum, e) => sum + e.amount, 0);
-
-  const activeMonthlySubs = subscriptions
-    .filter(s => s.isActive)
-    .reduce((sum, s) => {
-      if (s.billingCycle === "weekly") return sum + (s.amount * 52) / 12;
-      if (s.billingCycle === "monthly") return sum + s.amount;
-      if (s.billingCycle === "yearly") return sum + (s.amount / 12);
-      if (s.billingCycle === "quarterly") return sum + (s.amount / 3);
-      if (s.billingCycle === "free_trial") return sum;
-      return sum;
-    }, 0);
-
-  // Generate mock chart data based on real expenses if available, otherwise flat
-  const last7Days = Array.from({ length: 7 }).map((_, i) => {
-    const d = subDays(new Date(), 6 - i);
-    const dateStr = format(d, 'yyyy-MM-dd');
-    const dayTotal = expenses
-      .filter(e => e.date.startsWith(dateStr))
-      .reduce((sum, e) => sum + e.amount, 0);
-    return {
-      name: format(d, 'EEE'),
-      total: dayTotal
-    };
-  });
 
   const isLoading = loadingTasks || loadingExpenses || loadingSubs;
 
@@ -183,27 +152,7 @@ export default function Dashboard() {
 
         {/* ── Stat Cards ── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-3 gap-3">
-          <motion.div variants={itemVariants}>
-            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 overflow-hidden relative group hover:border-blue-400/40 transition-colors">
-              <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CheckCircle2 className="w-14 h-14 text-blue-400" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between p-4 pb-1 relative z-10">
-                <CardTitle className="text-xs font-medium text-muted-foreground">Task Completion</CardTitle>
-                <Activity className="h-4 w-4 text-blue-400 shrink-0" />
-              </CardHeader>
-              <CardContent className="p-4 pt-0 relative z-10">
-                <div className="text-3xl font-bold font-display text-blue-400">{taskProgress}%</div>
-                <p className="text-sm text-muted-foreground mt-0.5">{completedTasks} of {totalTasks} tasks</p>
-                {pendingHighPriority > 0 && (
-                  <div className="mt-1.5 inline-flex items-center rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                    {pendingHighPriority} high priority
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+          className="grid grid-cols-1 gap-3">
           <motion.div variants={itemVariants}>
             <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 overflow-hidden relative group hover:border-emerald-400/40 transition-colors">
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -219,26 +168,11 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </motion.div>
-          <motion.div variants={itemVariants}>
-            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20 overflow-hidden relative group hover:border-yellow-400/40 transition-colors">
-              <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CreditCard className="w-14 h-14 text-yellow-400" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between p-4 pb-1 relative z-10">
-                <CardTitle className="text-xs font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-                <CreditCard className="h-4 w-4 text-yellow-400 shrink-0" />
-              </CardHeader>
-              <CardContent className="p-4 pt-0 relative z-10">
-                <div className="text-3xl font-bold font-display text-yellow-400">${activeMonthlySubs.toFixed(2)}<span className="text-base text-muted-foreground font-normal">/mo</span></div>
-                <p className="text-sm text-muted-foreground mt-0.5">{subscriptions.filter(s => s.isActive).length} active services</p>
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
 
-        {/* ── Middle Row: Chart · Tasks · Gym ── */}
+        {/* ── Middle Row: Tasks · Gym ── */}
         <motion.div variants={containerVariants} initial="hidden" animate="show"
-          className="grid grid-cols-3 gap-3 min-h-0">
+          className="grid grid-cols-2 gap-3 min-h-0">
 
           {/* Upcoming Tasks — blue */}
           <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
@@ -281,44 +215,6 @@ export default function Dashboard() {
                     <div className="flex items-center justify-center h-full py-8 text-xs text-muted-foreground">All caught up!</div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Recent Expenses — emerald */}
-          <motion.div variants={itemVariants} className="min-h-0 flex flex-col">
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 hover:border-emerald-400/40 transition-colors flex flex-col h-full overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between p-4 pb-2 shrink-0">
-                <div>
-                  <CardTitle className="font-display text-sm">Recent Expenses</CardTitle>
-                  <p className="text-xs text-muted-foreground">Last 7 days</p>
-                </div>
-                <Link href="/finance">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-400 hover:text-emerald-300">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent className="flex-1 min-h-0 p-3 pt-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={last7Days} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#34d399" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '11px' }}
-                      itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(v: number) => [`$${v.toFixed(2)}`, 'Spent']}
-                    />
-                    <Area type="monotone" dataKey="total" stroke="#34d399" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
-                  </AreaChart>
-                </ResponsiveContainer>
               </CardContent>
             </Card>
           </motion.div>

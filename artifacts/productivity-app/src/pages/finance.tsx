@@ -93,6 +93,17 @@ async function updateOwed(id: number, data: Partial<OwedEntry>): Promise<OwedEnt
 async function deleteOwed(id: number): Promise<void> {
   await fetch(`/api/owed/${id}`, { method: "DELETE" });
 }
+async function createExpenseDirect(data: { title: string; amount: number; category: string; date: string; notes?: string | null }): Promise<void> {
+  const r = await fetch("/api/expenses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...data, type: "expense" }),
+  });
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(body?.error ?? "Failed to create expense");
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Finance() {
@@ -151,6 +162,26 @@ export default function Finance() {
     },
     onError: (err: Error) => {
       toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+    },
+  });
+  const markOwedToOthersPaidMutation = useMutation({
+    mutationFn: async (entry: OwedEntry) => {
+      await updateOwed(entry.id, { status: "paid" });
+      await createExpenseDirect({
+        title: `${entry.description} — paid to ${entry.fromName}`,
+        amount: entry.amount,
+        category: "Other",
+        date: new Date().toISOString(),
+        notes: entry.notes,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      toast({ title: "Marked as paid", description: "Payment recorded in your expenses." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
@@ -878,8 +909,8 @@ export default function Finance() {
                                     <Button
                                       variant="ghost" size="sm"
                                       className="h-8 text-xs text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 gap-1"
-                                      disabled={updateOwedMutation.isPending}
-                                      onClick={() => updateOwedMutation.mutate({ id: entry.id, data: { status: "paid" } })}
+                                      disabled={markOwedToOthersPaidMutation.isPending}
+                                      onClick={() => markOwedToOthersPaidMutation.mutate(entry)}
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5" />Mark paid
                                     </Button>

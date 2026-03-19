@@ -28,9 +28,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
-const EXPENSE_CATEGORIES = ["Food", "Transport", "Shopping", "Health", "Entertainment", "Other"];
-const SUB_CATEGORIES = ["Streaming", "Software", "Fitness", "News", "Other"];
-
 /* ── Schemas ─────────────────────────────────────────────────────── */
 const expenseSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -338,10 +335,7 @@ export default function Finance() {
                         <FormField control={expForm.control} name="category" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
-                              <SelectContent>{EXPENSE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                            </Select>
+                            <FormControl><Input className="bg-background" placeholder="e.g. Food, Travel, Health…" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -453,10 +447,8 @@ export default function Finance() {
                           <FormField control={subForm.control} name="category" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
-                                <SelectContent>{SUB_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                              </Select>
+                              <FormControl><Input className="bg-background" placeholder="e.g. Streaming, Software…" {...field} /></FormControl>
+                              <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={subForm.control} name="nextBillingDate" render={({ field }) => (

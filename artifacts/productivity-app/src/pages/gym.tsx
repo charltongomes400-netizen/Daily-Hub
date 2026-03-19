@@ -131,13 +131,13 @@ function ExerciseCard({
                 <FormField control={form.control} name="sets" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs text-muted-foreground">Sets</FormLabel>
-                    <FormControl><Input type="number" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="reps" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs text-muted-foreground">Reps</FormLabel>
-                    <FormControl><Input type="number" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="weight" render={({ field }) => (
@@ -263,13 +263,13 @@ function AddExerciseDialog({
               <FormField control={form.control} name="sets" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Sets</FormLabel>
-                  <FormControl><Input type="number" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
+                  <FormControl><Input type="number" min="0" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
                 </FormItem>
               )} />
               <FormField control={form.control} name="reps" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Reps</FormLabel>
-                  <FormControl><Input type="number" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
+                  <FormControl><Input type="number" min="0" className="bg-background text-center" placeholder="–" {...field} /></FormControl>
                 </FormItem>
               )} />
               <FormField control={form.control} name="weight" render={({ field }) => (

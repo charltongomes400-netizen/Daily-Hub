@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout";
+import { DatePicker } from "@/components/ui/date-picker";
 import { 
   useGetExpenses, useCreateExpense, useDeleteExpense,
   useGetSubscriptions, useCreateSubscription, useUpdateSubscription, useDeleteSubscription
@@ -490,7 +491,10 @@ export default function Finance() {
                             </FormItem>
                           )} />
                           <FormField control={expForm.control} name="date" render={({ field }) => (
-                            <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" className="bg-background" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Date</FormLabel>
+                              <FormControl><DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" /></FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )} />
                         </div>
                         <FormField control={expForm.control} name="category" render={({ field }) => (
@@ -874,7 +878,9 @@ export default function Finance() {
                             </FormItem>
                           )} />
                           <FormField control={subForm.control} name="nextBillingDate" render={({ field }) => (
-                            <FormItem><FormLabel>Next Billing</FormLabel><FormControl><Input type="date" className="bg-background" {...field} /></FormControl></FormItem>
+                            <FormItem><FormLabel>Next Billing</FormLabel>
+                              <FormControl><DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" /></FormControl>
+                            </FormItem>
                           )} />
                         </div>
                         <Button type="submit" className="w-full bg-chart-4 hover:bg-chart-4/90 text-primary-foreground" disabled={isCreatingSub}>
@@ -1010,7 +1016,7 @@ export default function Finance() {
                           <FormField control={owedForm.control} name="dueDate" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Due Date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                              <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                              <FormControl><DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" /></FormControl>
                             </FormItem>
                           )} />
                         </div>
@@ -1219,7 +1225,7 @@ export default function Finance() {
                           <FormField control={owedToOthersForm.control} name="dueDate" render={({ field }) => (
                             <FormItem>
                               <FormLabel>Due Date <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                              <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                              <FormControl><DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" /></FormControl>
                             </FormItem>
                           )} />
                         </div>

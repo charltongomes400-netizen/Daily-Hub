@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/layout";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   useGetTasks, useCreateTask, useUpdateTask, useDeleteTask,
   useGetCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
@@ -645,7 +646,9 @@ export default function Tasks() {
 
                   <FormField control={taskForm.control} name="deadline" render={({ field }) => (
                     <FormItem><FormLabel>Deadline (Optional)</FormLabel>
-                      <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                      <FormControl>
+                        <DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -1043,7 +1046,9 @@ export default function Tasks() {
 
               <FormField control={editTaskForm.control} name="deadline" render={({ field }) => (
                 <FormItem><FormLabel>Deadline (Optional)</FormLabel>
-                  <FormControl><Input type="date" className="bg-background" {...field} /></FormControl>
+                  <FormControl>
+                    <DatePicker value={field.value} onChange={field.onChange} placeholder="DD/MM/YY" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

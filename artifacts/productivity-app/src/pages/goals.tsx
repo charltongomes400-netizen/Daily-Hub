@@ -242,13 +242,14 @@ function GoalCelebration() {
 }
 
 /* ── Goal card ──────────────────────────────────────────────── */
-function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }: {
+function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks, onCelebrate }: {
   goal: Goal;
   onProgress: (id: number, p: number) => void;
   onComplete: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit: (goal: Goal) => void;
   onAddTasks: (title: string) => void;
+  onCelebrate: () => void;
 }) {
   const isTaskSynced = goal.category === "__tasks__";
   const daysLeft = goal.targetDate
@@ -257,13 +258,9 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
   const isOverdue = daysLeft !== null && daysLeft < 0;
   const isAlmostDue = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
   const isHot = goal.progress >= 75;
-  const [celebrating, setCelebrating] = useState(false);
 
   return (
     <>
-    <AnimatePresence>
-      {celebrating && <GoalCelebration />}
-    </AnimatePresence>
     <div className={`group relative rounded-2xl border p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
       isOverdue ? "bg-destructive/5 border-destructive/20" : "bg-card border-border/50 hover:border-primary/30"
     }`}>
@@ -339,8 +336,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
           {!isTaskSynced && goal.progress >= 100 ? (
             <button
               onClick={() => {
-                setCelebrating(true);
-                setTimeout(() => setCelebrating(false), 7000);
+                onCelebrate();
                 onComplete(goal.id);
               }}
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold whitespace-nowrap transition-all animate-pulse hover:animate-none border border-emerald-500/20"
@@ -389,6 +385,7 @@ export default function Goals() {
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
   const [isEditingQuote, setIsEditingQuote] = useState(false);
   const [customQuote, setCustomQuote] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -488,6 +485,9 @@ export default function Goals() {
 
   return (
     <Layout>
+      <AnimatePresence>
+        {celebrating && <GoalCelebration />}
+      </AnimatePresence>
       <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col gap-8 pb-20">
 
         {/* ── HERO ─────────────────────────────────────────────────── */}
@@ -646,6 +646,10 @@ export default function Goals() {
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onEdit={handleEditGoal}
                       onAddTasks={(title) => navigate(`/tasks?newList=${encodeURIComponent(title)}`)}
+                      onCelebrate={() => {
+                        setCelebrating(true);
+                        setTimeout(() => setCelebrating(false), 7000);
+                      }}
                     />
                   ))
                 )}

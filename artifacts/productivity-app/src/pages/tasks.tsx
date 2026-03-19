@@ -279,10 +279,18 @@ export default function Tasks() {
 
   /* mutations */
   const { mutate: createTask,    isPending: isCreatingTask } = useCreateTask({
-    mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }); setIsTaskOpen(false); taskForm.reset(); } }
+    mutation: { onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      setIsTaskOpen(false);
+      taskForm.reset();
+    } }
   });
   const { mutate: updateTask } = useUpdateTask({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
+    mutation: { onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+    } }
   });
   const { set: setTaskOptimistic, get: getTaskOptimistic, cleanup: cleanupTaskTimers } =
     useOptimisticDebounce<boolean>(
@@ -291,7 +299,10 @@ export default function Tasks() {
     );
   useEffect(() => cleanupTaskTimers, [cleanupTaskTimers]);
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] }) }
+    mutation: { onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+    } }
   });
   const { mutate: createCat,     isPending: isCreatingCat  } = useCreateCategory({
     mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/categories"] }); setIsCatOpen(false); catForm.reset(); } }

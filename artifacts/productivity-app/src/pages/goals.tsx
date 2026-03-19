@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Plus, Trash2, CheckCircle2, ChevronLeft, ChevronRight,
-  Flame, Trophy, Target, Calendar, Star, RotateCcw, Edit2,
+  Flame, Trophy, Target, Calendar, Star, RotateCcw, Edit2, ListTodo,
 } from "lucide-react";
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -114,6 +114,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
   onDelete: (id: number) => void;
   onEdit: (goal: Goal) => void;
 }) {
+  const isTaskSynced = goal.category === "__tasks__";
   const daysLeft = goal.targetDate
     ? differenceInDays(new Date(goal.targetDate), new Date())
     : null;
@@ -142,11 +143,16 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
             <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{goal.description}</p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
-            {goal.category && (
+            {isTaskSynced ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-blue-500/12 text-blue-400 border-blue-500/20">
+                <ListTodo className="w-3 h-3" />
+                Tasks
+              </span>
+            ) : goal.category ? (
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getCategoryColor(goal.category)}`}>
                 {goal.category}
               </span>
-            )}
+            ) : null}
             {goal.targetDate && (
               <span className={`text-xs font-medium ${isOverdue ? "text-destructive" : isAlmostDue ? "text-amber-400" : "text-muted-foreground"}`}>
                 {isOverdue
@@ -159,9 +165,11 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
           </div>
         </div>
         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(goal)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="Edit goal">
-            <Edit2 className="w-4 h-4" />
-          </button>
+          {!isTaskSynced && (
+            <button onClick={() => onEdit(goal)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors" title="Edit goal">
+              <Edit2 className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={() => onComplete(goal.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Mark complete">
             <CheckCircle2 className="w-4 h-4" />
           </button>
@@ -187,16 +195,21 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit }: {
               }}
             />
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onProgress(goal.id, Math.max(0, goal.progress - 10))}
-              className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-xs font-bold"
-            >−</button>
-            <button
-              onClick={() => onProgress(goal.id, Math.min(100, goal.progress + 10))}
-              className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-xs font-bold"
-            >+</button>
-          </div>
+          {!isTaskSynced && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onProgress(goal.id, Math.max(0, goal.progress - 10))}
+                className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-xs font-bold"
+              >−</button>
+              <button
+                onClick={() => onProgress(goal.id, Math.min(100, goal.progress + 10))}
+                className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-xs font-bold"
+              >+</button>
+            </div>
+          )}
+          {isTaskSynced && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">auto</span>
+          )}
         </div>
       </div>
     </div>

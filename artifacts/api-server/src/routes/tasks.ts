@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { tasksTable } from "@workspace/db/schema";
+import { tasksTable, goalsTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
   CreateTaskBody,
@@ -13,6 +13,51 @@ import { requireAuth, getUserId } from "../middleware/auth";
 const router: IRouter = Router();
 
 router.use(requireAuth);
+
+async function syncGoalForCategory(userId: string, category: string) {
+  const tasks = await db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.userId, userId), eq(tasksTable.category, category)));
+
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.completed).length;
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const status = progress === 100 ? "completed" : "active";
+
+  const existing = await db
+    .select()
+    .from(goalsTable)
+    .where(
+      and(
+        eq(goalsTable.userId, userId),
+        eq(goalsTable.title, category),
+        eq(goalsTable.category, "__tasks__")
+      )
+    );
+
+  if (existing.length === 0) {
+    if (total > 0) {
+      await db.insert(goalsTable).values({
+        userId,
+        title: category,
+        description: `Automatically tracked from "${category}" tasks (${completed}/${total} completed)`,
+        progress,
+        status,
+        category: "__tasks__",
+      });
+    }
+  } else {
+    await db
+      .update(goalsTable)
+      .set({
+        progress,
+        status,
+        description: `Automatically tracked from "${category}" tasks (${completed}/${total} completed)`,
+      })
+      .where(eq(goalsTable.id, existing[0].id));
+  }
+}
 
 router.get("/", async (req, res) => {
   const userId = getUserId(req);
@@ -46,6 +91,9 @@ router.post("/", async (req, res) => {
       completed: false,
     })
     .returning();
+
+  await syncGoalForCategory(userId, task.category);
+
   res.status(201).json({
     ...task,
     createdAt: task.createdAt.toISOString(),
@@ -80,6 +128,8 @@ router.patch("/:id", async (req, res) => {
     return;
   }
 
+  await syncGoalForCategory(userId, task.category);
+
   res.json({
     ...task,
     createdAt: task.createdAt.toISOString(),
@@ -91,7 +141,18 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const userId = getUserId(req);
   const { id } = DeleteTaskParams.parse(req.params);
+
+  const [task] = await db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
+
   await db.delete(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
+
+  if (task) {
+    await syncGoalForCategory(userId, task.category);
+  }
+
   res.status(204).send();
 });
 

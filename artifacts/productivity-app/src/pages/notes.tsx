@@ -1,20 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Edit2, X, Pin, PinOff, Archive, ArchiveRestore, Search, Palette } from "lucide-react";
+import {
+  Trash2, Edit2, X, Pin, PinOff, Archive, ArchiveRestore, Search, Palette,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough,
+  Heading1, Heading2, Heading3, List, ListOrdered, Quote,
+  Code, FileCode, Minus, Undo2, Redo2,
+} from "lucide-react";
 import { format } from "date-fns";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Placeholder from "@tiptap/extension-placeholder";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 interface Note {
@@ -27,76 +26,156 @@ interface Note {
   createdAt: string;
   updatedAt: string;
 }
-
 type NoteColor = "default"|"red"|"pink"|"orange"|"yellow"|"teal"|"blue"|"sage"|"grape"|"graphite";
+
+interface EditorHandle {
+  getHTML: () => string;
+  isEmpty: () => boolean;
+}
 
 /* ─── Color palette ──────────────────────────────────────────────── */
 const COLORS: { id: NoteColor; label: string; bg: string; border: string; dot: string }[] = [
-  { id: "default",  label: "Default",  bg: "bg-card",              border: "border-border/50",        dot: "#3f3f46" },
-  { id: "red",      label: "Red",      bg: "bg-red-950/50",        border: "border-red-800/40",       dot: "#ef4444" },
-  { id: "pink",     label: "Pink",     bg: "bg-pink-950/50",       border: "border-pink-800/40",      dot: "#ec4899" },
-  { id: "orange",   label: "Orange",   bg: "bg-orange-950/50",     border: "border-orange-800/40",    dot: "#f97316" },
-  { id: "yellow",   label: "Yellow",   bg: "bg-yellow-950/50",     border: "border-yellow-800/40",    dot: "#eab308" },
-  { id: "teal",     label: "Teal",     bg: "bg-teal-950/50",       border: "border-teal-800/40",      dot: "#14b8a6" },
-  { id: "blue",     label: "Blue",     bg: "bg-blue-950/50",       border: "border-blue-800/40",      dot: "#3b82f6" },
-  { id: "sage",     label: "Sage",     bg: "bg-green-950/50",      border: "border-green-800/40",     dot: "#22c55e" },
-  { id: "grape",    label: "Grape",    bg: "bg-violet-950/50",     border: "border-violet-800/40",    dot: "#8b5cf6" },
-  { id: "graphite", label: "Graphite", bg: "bg-zinc-800/70",       border: "border-zinc-600/50",      dot: "#71717a" },
+  { id: "default",  label: "Default",  bg: "bg-card",          border: "border-border/50",     dot: "#3f3f46" },
+  { id: "red",      label: "Red",      bg: "bg-red-950/50",    border: "border-red-800/40",    dot: "#ef4444" },
+  { id: "pink",     label: "Pink",     bg: "bg-pink-950/50",   border: "border-pink-800/40",   dot: "#ec4899" },
+  { id: "orange",   label: "Orange",   bg: "bg-orange-950/50", border: "border-orange-800/40", dot: "#f97316" },
+  { id: "yellow",   label: "Yellow",   bg: "bg-yellow-950/50", border: "border-yellow-800/40", dot: "#eab308" },
+  { id: "teal",     label: "Teal",     bg: "bg-teal-950/50",   border: "border-teal-800/40",   dot: "#14b8a6" },
+  { id: "blue",     label: "Blue",     bg: "bg-blue-950/50",   border: "border-blue-800/40",   dot: "#3b82f6" },
+  { id: "sage",     label: "Sage",     bg: "bg-green-950/50",  border: "border-green-800/40",  dot: "#22c55e" },
+  { id: "grape",    label: "Grape",    bg: "bg-violet-950/50", border: "border-violet-800/40", dot: "#8b5cf6" },
+  { id: "graphite", label: "Graphite", bg: "bg-zinc-800/70",   border: "border-zinc-600/50",   dot: "#71717a" },
 ];
+function getColor(color: string) { return COLORS.find(c => c.id === color) ?? COLORS[0]; }
 
-function getColorClasses(color: string) {
-  return COLORS.find(c => c.id === color) ?? COLORS[0];
+/* ─── Legacy plain-text → HTML ───────────────────────────────────── */
+function toHtml(content: string): string {
+  if (!content) return "<p></p>";
+  if (content.trim().startsWith("<")) return content;
+  return content.split("\n").map(l => `<p>${l || "<br>"}</p>`).join("");
 }
 
-/* ─── API helpers ────────────────────────────────────────────────── */
+/* ─── API ────────────────────────────────────────────────────────── */
 async function fetchNotes(): Promise<Note[]> {
   const r = await fetch("/api/notes"); if (!r.ok) throw new Error(); return r.json();
 }
 async function fetchArchived(): Promise<Note[]> {
   const r = await fetch("/api/notes/archived"); if (!r.ok) throw new Error(); return r.json();
 }
-async function createNote(data: Partial<Note>): Promise<Note> {
+async function apiCreate(data: Partial<Note>): Promise<Note> {
   const r = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   if (!r.ok) throw new Error(); return r.json();
 }
-async function patchNote(id: number, data: Partial<Note>): Promise<Note> {
+async function apiPatch(id: number, data: Partial<Note>): Promise<Note> {
   const r = await fetch(`/api/notes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   if (!r.ok) throw new Error(); return r.json();
 }
-async function deleteNote(id: number): Promise<void> {
-  await fetch(`/api/notes/${id}`, { method: "DELETE" });
+async function apiDelete(id: number): Promise<void> { await fetch(`/api/notes/${id}`, { method: "DELETE" }); }
+
+/* ─── Toolbar button ─────────────────────────────────────────────── */
+function TB({ active, title, onMouseDown, children }: {
+  active?: boolean; title: string;
+  onMouseDown: (e: React.MouseEvent) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button type="button" onMouseDown={onMouseDown} title={title}
+      className={`p-1.5 rounded-md transition-colors text-sm
+        ${active ? "bg-amber-500/20 text-amber-400" : "text-muted-foreground hover:text-foreground hover:bg-white/10"}`}>
+      {children}
+    </button>
+  );
 }
+function Divider() { return <div className="w-px h-5 bg-border/40 mx-0.5 self-center" />; }
+
+/* ─── Toolbar ────────────────────────────────────────────────────── */
+function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
+  if (!editor) return null;
+  const cmd = (fn: () => void) => (e: React.MouseEvent) => { e.preventDefault(); fn(); };
+  return (
+    <div className="flex items-center flex-wrap gap-0.5 px-2 py-1.5 border-b border-border/30 bg-black/10 rounded-t-xl">
+      <TB title="Undo" onMouseDown={cmd(() => editor.chain().focus().undo().run())}><Undo2 className="w-3.5 h-3.5" /></TB>
+      <TB title="Redo" onMouseDown={cmd(() => editor.chain().focus().redo().run())}><Redo2 className="w-3.5 h-3.5" /></TB>
+      <Divider />
+      <TB active={editor.isActive("heading",{level:1})} title="Heading 1" onMouseDown={cmd(() => editor.chain().focus().toggleHeading({level:1}).run())}><Heading1 className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("heading",{level:2})} title="Heading 2" onMouseDown={cmd(() => editor.chain().focus().toggleHeading({level:2}).run())}><Heading2 className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("heading",{level:3})} title="Heading 3" onMouseDown={cmd(() => editor.chain().focus().toggleHeading({level:3}).run())}><Heading3 className="w-3.5 h-3.5" /></TB>
+      <Divider />
+      <TB active={editor.isActive("bold")}      title="Bold (⌘B)"      onMouseDown={cmd(() => editor.chain().focus().toggleBold().run())}><Bold className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("italic")}    title="Italic (⌘I)"    onMouseDown={cmd(() => editor.chain().focus().toggleItalic().run())}><Italic className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("underline")} title="Underline (⌘U)" onMouseDown={cmd(() => editor.chain().focus().toggleUnderline().run())}><UnderlineIcon className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("strike")}    title="Strikethrough"  onMouseDown={cmd(() => editor.chain().focus().toggleStrike().run())}><Strikethrough className="w-3.5 h-3.5" /></TB>
+      <Divider />
+      <TB active={editor.isActive("bulletList")}  title="Bullet list"   onMouseDown={cmd(() => editor.chain().focus().toggleBulletList().run())}><List className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("orderedList")} title="Numbered list" onMouseDown={cmd(() => editor.chain().focus().toggleOrderedList().run())}><ListOrdered className="w-3.5 h-3.5" /></TB>
+      <Divider />
+      <TB active={editor.isActive("blockquote")} title="Blockquote"  onMouseDown={cmd(() => editor.chain().focus().toggleBlockquote().run())}><Quote className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("code")}       title="Inline code" onMouseDown={cmd(() => editor.chain().focus().toggleCode().run())}><Code className="w-3.5 h-3.5" /></TB>
+      <TB active={editor.isActive("codeBlock")}  title="Code block"  onMouseDown={cmd(() => editor.chain().focus().toggleCodeBlock().run())}><FileCode className="w-3.5 h-3.5" /></TB>
+      <TB title="Divider line" onMouseDown={cmd(() => editor.chain().focus().setHorizontalRule().run())}><Minus className="w-3.5 h-3.5" /></TB>
+    </div>
+  );
+}
+
+/* ─── Rich editor (imperative handle) ───────────────────────────── */
+const RichEditorWithRef = forwardRef<EditorHandle, {
+  initialContent?: string;
+  placeholder?: string;
+  minHeight?: string;
+}>(function RichEditorWithRef({ initialContent, placeholder, minHeight = "120px" }, ref) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({ placeholder: placeholder ?? "Write something…" }),
+    ],
+    content: initialContent ? toHtml(initialContent) : "",
+  });
+
+  useEffect(() => {
+    if (editor && initialContent !== undefined) {
+      const html = toHtml(initialContent);
+      if (editor.getHTML() !== html) editor.commands.setContent(html, false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialContent]);
+
+  useImperativeHandle(ref, () => ({
+    getHTML: () => editor?.getHTML() ?? "",
+    isEmpty: () => editor?.isEmpty ?? true,
+  }), [editor]);
+
+  return (
+    <div className="rounded-xl border border-border/30 overflow-hidden">
+      <Toolbar editor={editor} />
+      <div className="px-3 py-2 overflow-y-auto" style={{ minHeight }}>
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  );
+});
 
 /* ─── Color picker popover ───────────────────────────────────────── */
 function ColorPicker({ current, onChange }: { current: string; onChange: (c: NoteColor) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    function handler(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, []);
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
-        title="Change color"
-      >
+      <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }} title="Change color"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors">
         <Palette className="w-4 h-4" />
       </button>
       {open && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 bg-popover border border-border/50 rounded-xl shadow-2xl p-2 flex gap-1.5 flex-wrap w-52">
           {COLORS.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onChange(c.id); setOpen(false); }}
+            <button key={c.id} type="button" onClick={(e) => { e.stopPropagation(); onChange(c.id); setOpen(false); }}
               className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${current === c.id ? "border-white scale-110" : "border-transparent"}`}
-              style={{ backgroundColor: c.dot }}
-              title={c.label}
-            />
+              style={{ backgroundColor: c.dot }} title={c.label} />
           ))}
         </div>
       )}
@@ -104,72 +183,56 @@ function ColorPicker({ current, onChange }: { current: string; onChange: (c: Not
   );
 }
 
-/* ─── Inline create card ──────────────────────────────────────────── */
+/* ─── Inline create ──────────────────────────────────────────────── */
 function InlineCreate({ onSave }: { onSave: (data: Partial<Note>) => void }) {
   const [expanded, setExpanded] = useState(false);
-  const [title, setTitle]     = useState("");
-  const [content, setContent] = useState("");
-  const [color, setColor]     = useState<NoteColor>("default");
-  const ref = useRef<HTMLDivElement>(null);
+  const [title, setTitle] = useState("");
+  const [color, setColor] = useState<NoteColor>("default");
+  const editorRef = useRef<EditorHandle>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const col = getColor(color);
 
-  const col = getColorClasses(color);
-
-  function save() {
-    if (!content.trim()) { setExpanded(false); setTitle(""); setContent(""); setColor("default"); return; }
-    onSave({ title: title.trim(), content: content.trim(), color, isPinned: false });
-    setExpanded(false); setTitle(""); setContent(""); setColor("default");
-  }
+  const save = useCallback(() => {
+    const html  = editorRef.current?.getHTML() ?? "";
+    const empty = editorRef.current?.isEmpty() ?? true;
+    if (empty) { setExpanded(false); setTitle(""); setColor("default"); return; }
+    onSave({ title: title.trim(), content: html, color, isPinned: false });
+    setExpanded(false); setTitle(""); setColor("default");
+  }, [title, color, onSave]);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) save();
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) save();
     }
-    if (expanded) document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [expanded, title, content, color]);
+    if (expanded) {
+      const id = setTimeout(() => document.addEventListener("mousedown", handler), 150);
+      return () => { clearTimeout(id); document.removeEventListener("mousedown", handler); };
+    }
+  }, [expanded, save]);
 
   return (
-    <div
-      ref={ref}
-      className={`rounded-2xl border shadow-lg transition-all duration-200 max-w-xl mx-auto mb-8 overflow-hidden ${col.bg} ${col.border}`}
-    >
+    <div ref={wrapperRef} className={`rounded-2xl border shadow-lg transition-all duration-200 max-w-2xl mx-auto mb-8 overflow-hidden ${col.bg} ${col.border}`}>
       {expanded ? (
         <div>
-          <input
-            autoFocus
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Title"
-            className="w-full bg-transparent px-4 pt-4 pb-1 text-sm font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
-          />
-          <textarea
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save(); }}
-            placeholder="Take a note…"
-            rows={4}
-            className="w-full bg-transparent px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none resize-none"
-          />
-          <div className="flex items-center justify-between px-3 pb-3">
+          <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
+            className="w-full bg-transparent px-4 pt-3 pb-1 text-sm font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none" />
+          <div className="px-3 pb-2">
+            <RichEditorWithRef ref={editorRef} placeholder="Take a note…" minHeight="100px" />
+          </div>
+          <div className="flex items-center justify-between px-3 pb-3 mt-1">
             <ColorPicker current={color} onChange={setColor} />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground/50">⌘↵ to save</span>
-              <button
-                type="button"
-                onClick={save}
-                className="text-xs font-semibold text-foreground hover:text-amber-400 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
-              >
+              <span className="text-xs text-muted-foreground/40">⌘↵ saves</span>
+              <button type="button" onClick={save}
+                className="text-xs font-semibold text-foreground hover:text-amber-400 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 Close
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="w-full px-4 py-3.5 text-left text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-        >
+        <button type="button" onClick={() => setExpanded(true)}
+          className="w-full px-4 py-3.5 text-left text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors">
           Take a note…
         </button>
       )}
@@ -184,155 +247,97 @@ function NoteCard({ note, onUpdate, onDelete }: {
   onDelete: (id: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const col = getColorClasses(note.color);
-  const form = useForm<{ title: string; content: string }>({
-    defaultValues: { title: note.title, content: note.content },
-  });
+  const [editTitle, setEditTitle] = useState(note.title);
+  const editorRef = useRef<EditorHandle>(null);
+  const col = getColor(note.color);
 
   function openEdit(e: React.MouseEvent) {
     e.stopPropagation();
-    form.reset({ title: note.title, content: note.content });
+    setEditTitle(note.title);
     setEditing(true);
+  }
+
+  function saveEdit() {
+    const html = editorRef.current?.getHTML() ?? note.content;
+    onUpdate(note.id, { title: editTitle.trim(), content: html });
+    setEditing(false);
   }
 
   return (
     <>
-      <div
-        onClick={openEdit}
-        className={`group relative rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 break-inside-avoid mb-4 ${col.bg} ${col.border}`}
-      >
-        {/* Pin indicator */}
+      <div onClick={openEdit}
+        className={`group relative rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 break-inside-avoid mb-4 ${col.bg} ${col.border}`}>
         {note.isPinned && (
           <div className="absolute top-2.5 right-2.5">
             <Pin className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
           </div>
         )}
-
         <div className="p-4">
-          {note.title && (
-            <h3 className="font-semibold text-sm text-foreground mb-2 leading-snug pr-5">{note.title}</h3>
-          )}
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-[12]">{note.content}</p>
+          {note.title && <h3 className="font-semibold text-sm text-foreground mb-2 leading-snug pr-5">{note.title}</h3>}
+          <div className="note-html-preview text-xs text-muted-foreground overflow-hidden max-h-52 [&>*:first-child]:mt-0"
+            dangerouslySetInnerHTML={{ __html: toHtml(note.content) }} />
         </div>
-
-        {/* Hover action bar */}
         <div className="flex items-center justify-between px-3 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-0.5">
             <ColorPicker current={note.color} onChange={(c) => { onUpdate(note.id, { color: c }); }} />
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onUpdate(note.id, { isPinned: !note.isPinned }); }}
+            <button type="button" onClick={(e) => { e.stopPropagation(); onUpdate(note.id, { isPinned: !note.isPinned }); }}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-white/10 transition-colors"
-              title={note.isPinned ? "Unpin" : "Pin note"}
-            >
+              title={note.isPinned ? "Unpin" : "Pin"}>
               {note.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
             </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onUpdate(note.id, { isArchived: !note.isArchived }); }}
+            <button type="button" onClick={(e) => { e.stopPropagation(); onUpdate(note.id, { isArchived: !note.isArchived }); }}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-white/10 transition-colors"
-              title={note.isArchived ? "Unarchive" : "Archive"}
-            >
+              title={note.isArchived ? "Unarchive" : "Archive"}>
               {note.isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
             </button>
           </div>
           <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={openEdit}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
-              title="Edit"
-            >
+            <button type="button" onClick={openEdit}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors" title="Edit">
               <Edit2 className="w-4 h-4" />
             </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-white/10 transition-colors"
-              title="Delete"
-            >
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-white/10 transition-colors" title="Delete">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
-
         <div className="px-4 pb-2 text-xs text-muted-foreground/40">
           {format(new Date(note.updatedAt), "MMM d, yyyy")}
         </div>
       </div>
 
-      {/* Edit dialog */}
       <Dialog open={editing} onOpenChange={(o) => { if (!o) setEditing(false); }}>
-        <DialogContent
-          className={`border shadow-2xl max-w-xl ${col.bg} ${col.border}`}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <DialogContent className={`border shadow-2xl max-w-2xl max-h-[85vh] flex flex-col ${col.bg} ${col.border}`}>
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-base font-semibold">Edit Note</DialogTitle>
-              <div className="flex items-center gap-1">
-                <ColorPicker
-                  current={note.color}
-                  onChange={(c) => onUpdate(note.id, { color: c })}
-                />
-                <button
-                  type="button"
-                  onClick={() => { onUpdate(note.id, { isPinned: !note.isPinned }); }}
+            <div className="flex items-center justify-between mb-2">
+              <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title"
+                className="bg-transparent text-base font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none flex-1 mr-3" />
+              <div className="flex items-center gap-1 shrink-0">
+                <ColorPicker current={note.color} onChange={(c) => onUpdate(note.id, { color: c })} />
+                <button type="button" onClick={() => onUpdate(note.id, { isPinned: !note.isPinned })}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-white/10 transition-colors"
-                  title={note.isPinned ? "Unpin" : "Pin"}
-                >
+                  title={note.isPinned ? "Unpin" : "Pin"}>
                   {note.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
                 </button>
               </div>
             </div>
           </DialogHeader>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(data => {
-                onUpdate(note.id, data);
-                setEditing(false);
-              })}
-              className="space-y-3 mt-1"
-            >
-              <FormField control={form.control} name="title" render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <input
-                      placeholder="Title"
-                      className="w-full bg-transparent text-base font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none border-none p-0"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="content" render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <textarea
-                      rows={8}
-                      placeholder="Note content…"
-                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none border-none p-0"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="flex items-center justify-between pt-2 border-t border-border/20">
-                <button
-                  type="button"
-                  onClick={() => { onUpdate(note.id, { isArchived: !note.isArchived }); setEditing(false); }}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {note.isArchived ? <><ArchiveRestore className="w-3.5 h-3.5" />Unarchive</> : <><Archive className="w-3.5 h-3.5" />Archive</>}
-                </button>
-                <div className="flex gap-2">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-                  <Button type="submit" size="sm" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold">Save</Button>
-                </div>
-              </div>
-            </form>
-          </Form>
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <RichEditorWithRef ref={editorRef} initialContent={note.content} placeholder="Note content…" minHeight="200px" />
+          </div>
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-border/20 shrink-0">
+            <button type="button" onClick={() => { onUpdate(note.id, { isArchived: !note.isArchived }); setEditing(false); }}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              {note.isArchived
+                ? <><ArchiveRestore className="w-3.5 h-3.5" />Unarchive</>
+                : <><Archive className="w-3.5 h-3.5" />Archive</>}
+            </button>
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+              <Button type="button" size="sm" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold" onClick={saveEdit}>Save</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
@@ -341,97 +346,73 @@ function NoteCard({ note, onUpdate, onDelete }: {
 
 /* ─── Section label ──────────────────────────────────────────────── */
 function SectionLabel({ label }: { label: string }) {
-  return (
-    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest mb-3 px-1">{label}</p>
-  );
+  return <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest mb-3 px-1">{label}</p>;
 }
 
 /* ─── Main page ──────────────────────────────────────────────────── */
 export default function Notes() {
   const queryClient = useQueryClient();
-  const [query, setQuery]         = useState("");
+  const [query, setQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
 
   const { data: notes = [],    isLoading: loadNotes    } = useQuery({ queryKey: ["/api/notes"],          queryFn: fetchNotes    });
   const { data: archived = [], isLoading: loadArchived } = useQuery({ queryKey: ["/api/notes/archived"], queryFn: fetchArchived });
 
   const createMutation = useMutation({
-    mutationFn: createNote,
+    mutationFn: apiCreate,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/notes"] }),
   });
-
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Note> }) => patchNote(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<Note> }) => apiPatch(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes/archived"] });
     },
   });
-
   const deleteMutation = useMutation({
-    mutationFn: deleteNote,
+    mutationFn: apiDelete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes/archived"] });
     },
   });
 
-  const active = showArchive ? archived : notes;
+  const active   = showArchive ? archived : notes;
   const filtered = query.trim()
-    ? active.filter(n =>
-        n.title.toLowerCase().includes(query.toLowerCase()) ||
-        n.content.toLowerCase().includes(query.toLowerCase())
-      )
+    ? active.filter(n => n.title.toLowerCase().includes(query.toLowerCase()) || n.content.toLowerCase().includes(query.toLowerCase()))
     : active;
-
-  const pinned  = filtered.filter(n => n.isPinned);
-  const others  = filtered.filter(n => !n.isPinned);
-
+  const pinned    = filtered.filter(n => n.isPinned);
+  const others    = filtered.filter(n => !n.isPinned);
   const isLoading = showArchive ? loadArchived : loadNotes;
 
   return (
     <Layout>
       <div className="p-4 md:p-8 max-w-6xl mx-auto flex flex-col h-full pb-20">
-
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">Notes</h1>
             <p className="text-muted-foreground mt-1">{showArchive ? "Archived notes" : "Keep your thoughts and ideas organized."}</p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search notes…"
-                className="pl-8 pr-3 py-2 text-sm bg-card border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-amber-500/30 w-48"
-              />
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search notes…"
+                className="pl-8 pr-3 py-2 text-sm bg-card border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-amber-500/30 w-48" />
               {query && (
                 <button onClick={() => setQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   <X className="w-3 h-3" />
                 </button>
               )}
             </div>
-            {/* Archive toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setShowArchive(s => !s); setQuery(""); }}
-              className={`gap-2 ${showArchive ? "border-amber-500/50 text-amber-400" : ""}`}
-            >
+            <Button variant="outline" size="sm" onClick={() => { setShowArchive(s => !s); setQuery(""); }}
+              className={`gap-2 ${showArchive ? "border-amber-500/50 text-amber-400" : ""}`}>
               {showArchive ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
               {showArchive ? "Exit Archive" : "Archive"}
             </Button>
           </div>
         </div>
 
-        {/* Inline create — only in main view */}
-        {!showArchive && (
-          <InlineCreate onSave={(data) => createMutation.mutate(data)} />
-        )}
+        {!showArchive && <InlineCreate onSave={(data) => createMutation.mutate(data)} />}
 
         {isLoading ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
@@ -440,49 +421,35 @@ export default function Notes() {
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-secondary/50 mb-4">
-              {showArchive
-                ? <Archive className="w-6 h-6 text-muted-foreground/40" />
-                : <Search className="w-6 h-6 text-muted-foreground/40" />
-              }
+              {showArchive ? <Archive className="w-6 h-6 text-muted-foreground/40" /> : <Search className="w-6 h-6 text-muted-foreground/40" />}
             </div>
             <p className="text-muted-foreground font-medium">
               {query ? "No notes match your search" : showArchive ? "No archived notes" : "No notes yet"}
             </p>
-            {!query && !showArchive && (
-              <p className="text-xs text-muted-foreground/50 mt-1">Click "Take a note…" above to get started.</p>
-            )}
+            {!query && !showArchive && <p className="text-xs text-muted-foreground/50 mt-1">Click "Take a note…" above to get started.</p>}
           </div>
         ) : (
           <>
-            {/* Pinned */}
             {pinned.length > 0 && (
               <div className="mb-6">
                 <SectionLabel label="Pinned" />
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
                   {pinned.map(note => (
-                    <NoteCard
-                      key={note.id}
-                      note={note}
+                    <NoteCard key={note.id} note={note}
                       onUpdate={(id, data) => updateMutation.mutate({ id, data })}
-                      onDelete={(id) => deleteMutation.mutate(id)}
-                    />
+                      onDelete={(id) => deleteMutation.mutate(id)} />
                   ))}
                 </div>
               </div>
             )}
-
-            {/* Other / all */}
             {others.length > 0 && (
               <div>
                 {pinned.length > 0 && <SectionLabel label="Other" />}
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
                   {others.map(note => (
-                    <NoteCard
-                      key={note.id}
-                      note={note}
+                    <NoteCard key={note.id} note={note}
                       onUpdate={(id, data) => updateMutation.mutate({ id, data })}
-                      onDelete={(id) => deleteMutation.mutate(id)}
-                    />
+                      onDelete={(id) => deleteMutation.mutate(id)} />
                   ))}
                 </div>
               </div>

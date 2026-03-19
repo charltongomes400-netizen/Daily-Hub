@@ -86,9 +86,11 @@ export type SubscriptionBillingCycle =
   (typeof SubscriptionBillingCycle)[keyof typeof SubscriptionBillingCycle];
 
 export const SubscriptionBillingCycle = {
+  weekly: "weekly",
   monthly: "monthly",
   quarterly: "quarterly",
   yearly: "yearly",
+  free_trial: "free_trial",
 } as const;
 
 export interface Subscription {
@@ -107,9 +109,11 @@ export type CreateSubscriptionRequestBillingCycle =
   (typeof CreateSubscriptionRequestBillingCycle)[keyof typeof CreateSubscriptionRequestBillingCycle];
 
 export const CreateSubscriptionRequestBillingCycle = {
+  weekly: "weekly",
   monthly: "monthly",
   quarterly: "quarterly",
   yearly: "yearly",
+  free_trial: "free_trial",
 } as const;
 
 export interface CreateSubscriptionRequest {
@@ -125,9 +129,11 @@ export type UpdateSubscriptionRequestBillingCycle =
   (typeof UpdateSubscriptionRequestBillingCycle)[keyof typeof UpdateSubscriptionRequestBillingCycle];
 
 export const UpdateSubscriptionRequestBillingCycle = {
+  weekly: "weekly",
   monthly: "monthly",
   quarterly: "quarterly",
   yearly: "yearly",
+  free_trial: "free_trial",
 } as const;
 
 export interface UpdateSubscriptionRequest {

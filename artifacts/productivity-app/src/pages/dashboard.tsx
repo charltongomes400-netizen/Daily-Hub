@@ -282,7 +282,7 @@ export default function Dashboard() {
                       <Link href="/notes"><span className="text-xs text-primary hover:underline cursor-pointer">Create one →</span></Link>
                     </div>
                   ) : (
-                    <div className="h-full p-3 rounded-xl bg-secondary/40 border border-border/30">
+                    <div className="h-full p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <h3 className="font-semibold text-sm text-foreground leading-snug truncate">{latestNote.title || "Untitled"}</h3>
                         <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(latestNote.updatedAt), 'MMM d')}</span>

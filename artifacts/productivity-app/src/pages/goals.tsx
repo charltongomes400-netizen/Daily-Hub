@@ -109,36 +109,131 @@ function ProgressRing({ value, size = 80, stroke = 6 }: { value: number; size?: 
 }
 
 /* ── Celebration burst ──────────────────────────────────────── */
-const CONFETTI_COLORS = ["#10b981","#f59e0b","#3b82f6","#ec4899","#8b5cf6","#f97316","#34d399","#fbbf24"];
+const CONFETTI_COLORS = [
+  "#10b981","#34d399","#f59e0b","#fbbf24","#3b82f6","#60a5fa",
+  "#ec4899","#f472b6","#8b5cf6","#a78bfa","#f97316","#fb923c",
+  "#06b6d4","#ef4444","#84cc16","#facc15",
+];
+
+type ParticleShape = "circle" | "square" | "ribbon";
 
 function GoalCelebration() {
   const particles = useMemo(() =>
-    Array.from({ length: 28 }, (_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 340,
-      y: -(Math.random() * 220 + 60),
-      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-      size: Math.random() * 7 + 4,
-      rotate: Math.random() * 540 - 270,
-      delay: Math.random() * 0.35,
-      isSquare: Math.random() > 0.5,
-    }))
+    Array.from({ length: 110 }, (_, i) => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 520 + 180;
+      const shape: ParticleShape =
+        Math.random() < 0.35 ? "ribbon"
+        : Math.random() < 0.5 ? "square"
+        : "circle";
+      const w = shape === "ribbon" ? Math.random() * 5 + 3 : Math.random() * 9 + 4;
+      const h = shape === "ribbon" ? Math.random() * 18 + 10 : w;
+      return {
+        id: i,
+        x: Math.cos(angle) * speed,
+        yPeak: -(Math.abs(Math.sin(angle)) * speed * 0.9 + Math.random() * 160 + 60),
+        yFall: Math.random() * 500 + 500,
+        peakFrac: 0.22 + Math.random() * 0.14,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        w, h, shape,
+        rotate: Math.random() * 900 - 450,
+        delay: Math.random() * 0.55,
+      };
+    })
   , []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+
+      {/* ── Gold flash ─────────────────────────────── */}
+      <motion.div
+        className="absolute inset-0"
+        initial={{ opacity: 0.55 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: 0.45 }}
+        style={{ background: "radial-gradient(ellipse at center, #fde68a 0%, #f59e0b44 40%, transparent 70%)" }}
+      />
+
+      {/* ── Central celebration card ────────────────── */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 1.18, 0.95, 1, 1, 1, 0.9, 0], opacity: [0, 1, 1, 1, 1, 1, 1, 0] }}
+          transition={{ duration: 3.2, times: [0, 0.12, 0.2, 0.28, 0.55, 0.75, 0.88, 1], ease: "easeInOut" }}
+          className="flex flex-col items-center gap-4 bg-card/90 backdrop-blur-md rounded-3xl px-12 py-9 border border-emerald-500/40 shadow-2xl"
+          style={{ boxShadow: "0 0 60px 10px rgba(16,185,129,0.25), 0 25px 50px rgba(0,0,0,0.5)" }}
+        >
+          {/* Trophy with bounce */}
+          <motion.div
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: [0, 1.4, 0.9, 1.1, 1], rotate: [-20, 15, -8, 5, 0] }}
+            transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+            className="relative"
+          >
+            <div className="text-7xl select-none">🏆</div>
+            {/* Glow ring behind trophy */}
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{ duration: 1.2, repeat: 2, repeatType: "loop", delay: 0.3 }}
+              style={{ background: "radial-gradient(circle, #fbbf24 0%, transparent 70%)" }}
+            />
+          </motion.div>
+
+          {/* Text */}
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.4 }}
+          >
+            <p className="text-2xl font-display font-bold text-foreground tracking-tight">Goal Achieved!</p>
+            <p className="text-sm text-emerald-400 font-semibold mt-1.5">You absolutely crushed it 🎉</p>
+          </motion.div>
+
+          {/* Dot row */}
+          <div className="flex gap-1.5">
+            {[0, 1, 2, 3, 4].map(i => (
+              <motion.div key={i}
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.4, 1] }}
+                transition={{ delay: 0.45 + i * 0.06, duration: 0.3 }}
+                className="w-2 h-2 rounded-full bg-emerald-400"
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── Confetti particles ──────────────────────── */}
       {particles.map(p => (
         <motion.div
           key={p.id}
-          initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
-          animate={{ x: p.x, y: p.y, opacity: 0, scale: 0.3, rotate: p.rotate }}
-          transition={{ duration: 1.5, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
           style={{
             position: "absolute",
-            width: p.size,
-            height: p.size,
+            left: "50%",
+            top: "50%",
+            width: p.w,
+            height: p.h,
+            marginLeft: -p.w / 2,
+            marginTop: -p.h / 2,
             backgroundColor: p.color,
-            borderRadius: p.isSquare ? "2px" : "50%",
+            borderRadius: p.shape === "circle" ? "50%" : p.shape === "ribbon" ? "3px" : "2px",
+          }}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
+          animate={{
+            x: p.x,
+            y: [0, p.yPeak, p.yFall],
+            opacity: [1, 1, 1, 0],
+            scale: [1, 1, 0.8, 0.2],
+            rotate: p.rotate,
+          }}
+          transition={{
+            x: { duration: 3.2, delay: p.delay, ease: "easeOut" },
+            y: { duration: 3.2, delay: p.delay, times: [0, p.peakFrac, 1], ease: ["easeOut", "easeIn"] },
+            opacity: { duration: 3.2, delay: p.delay, times: [0, 0.4, 0.75, 1] },
+            scale:   { duration: 3.2, delay: p.delay, times: [0, 0.3, 0.7, 1] },
+            rotate:  { duration: 3.2, delay: p.delay, ease: "linear" },
           }}
         />
       ))}
@@ -245,7 +340,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
             <button
               onClick={() => {
                 setCelebrating(true);
-                setTimeout(() => setCelebrating(false), 2000);
+                setTimeout(() => setCelebrating(false), 3800);
                 onComplete(goal.id);
               }}
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold whitespace-nowrap transition-all animate-pulse hover:animate-none border border-emerald-500/20"

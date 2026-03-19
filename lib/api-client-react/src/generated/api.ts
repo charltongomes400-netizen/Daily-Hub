@@ -361,6 +361,47 @@ export const useDeleteCategory = <
 };
 
 /**
+ * @summary Update a category (name and/or icon)
+ */
+export const updateCategory = async (
+  id: number,
+  data: { name?: string; icon?: string },
+  options?: RequestInit,
+): Promise<TaskCategory> => {
+  return customFetch<TaskCategory>(`/api/categories/${id}`, {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(data),
+  });
+};
+
+export const useUpdateCategory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCategory>>,
+    TError,
+    { id: number; data: { name?: string; icon?: string } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCategory>>,
+  TError,
+  { id: number; data: { name?: string; icon?: string } },
+  TContext
+> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return useMutation({
+    mutationKey: ["updateCategory"],
+    mutationFn: ({ id, data }) => updateCategory(id, data, requestOptions),
+    ...mutationOptions,
+  });
+};
+
+/**
  * @summary Get all tasks
  */
 export const getGetTasksUrl = () => {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/layout";
 import {
   useGetTasks, useCreateTask, useUpdateTask, useDeleteTask,
-  useGetCategories, useCreateCategory, useDeleteCategory,
+  useGetCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -95,55 +95,136 @@ type StatusFilter = "all" | "due-soon" | "active" | "completed";
 
 /* ─── Sortable category row (used inside Manage Categories dialog) ─── */
 function SortableCategoryRow({
-  cat, countFor, onDelete,
+  cat, countFor, onDelete, onUpdate,
 }: {
   cat: { id: number; name: string; color: string; icon: string };
   countFor: (name: string) => number;
   onDelete: () => void;
+  onUpdate: (id: number, data: { name?: string; icon?: string }) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: cat.id });
 
+  const [editing, setEditing]   = useState(false);
+  const [editName, setEditName] = useState(cat.name);
+  const [editIcon, setEditIcon] = useState(cat.icon);
+
   const col  = getColor(cat.color);
-  const Icon = getIcon(cat.icon);
+  const Icon = getIcon(editing ? editIcon : cat.icon);
+
+  function handleSave() {
+    onUpdate(cat.id, { name: editName.trim() || cat.name, icon: editIcon });
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setEditName(cat.name);
+    setEditIcon(cat.icon);
+    setEditing(false);
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center gap-3 p-3 rounded-xl border bg-background/50 select-none transition-shadow ${
+      className={`flex flex-col gap-2 p-3 rounded-xl border bg-background/50 select-none transition-shadow ${
         isDragging
           ? "border-primary/50 shadow-lg shadow-primary/10 z-50 opacity-90"
           : "border-border/40"
       }`}
     >
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none p-0.5"
-        tabIndex={-1}
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
+      <div className="flex items-center gap-3">
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none p-0.5"
+          tabIndex={-1}
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
 
-      {/* Icon */}
-      <span className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${col.bg} ${col.text}`}>
-        <Icon className="w-4 h-4" />
-      </span>
+        {/* Icon badge */}
+        <span className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${col.bg} ${col.text}`}>
+          <Icon className="w-4 h-4" />
+        </span>
 
-      <span className="flex-1 font-medium text-sm">{cat.name}</span>
-      <span className="text-xs text-muted-foreground mr-1">{countFor(cat.name)} tasks</span>
+        {editing ? (
+          <input
+            autoFocus
+            value={editName}
+            onChange={e => setEditName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") handleCancel(); }}
+            className="flex-1 text-sm font-medium bg-background border border-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        ) : (
+          <span className="flex-1 font-medium text-sm">{cat.name}</span>
+        )}
 
-      {/* Delete */}
-      <button
-        onClick={onDelete}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-        title="Remove category"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+        <span className="text-xs text-muted-foreground">{countFor(cat.name)} tasks</span>
+
+        {/* Edit toggle */}
+        {!editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            title="Edit category"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* Delete */}
+        {!editing && (
+          <button
+            onClick={onDelete}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Remove category"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Inline edit panel — icon picker + save/cancel */}
+      {editing && (
+        <div className="flex flex-col gap-2 pt-1 pl-11">
+          {/* Icon picker */}
+          <div className="flex flex-wrap gap-1.5">
+            {ICON_OPTIONS.map(({ id, label, Icon: Ic }) => (
+              <button
+                key={id}
+                type="button"
+                title={label}
+                onClick={() => setEditIcon(id)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                  ${editIcon === id
+                    ? `${col.bg} ${col.text} ring-2 ring-offset-1 ring-offset-background ${col.ring}`
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              >
+                <Ic className="w-4 h-4" />
+              </button>
+            ))}
+          </div>
+
+          {/* Save / Cancel */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex-1 text-xs py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -214,6 +295,12 @@ export default function Tasks() {
   });
   const { mutate: createCat,     isPending: isCreatingCat  } = useCreateCategory({
     mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/categories"] }); setIsCatOpen(false); catForm.reset(); } }
+  });
+  const { mutate: updateCat } = useUpdateCategory({
+    mutation: { onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    } }
   });
   const { mutate: deleteCat   } = useDeleteCategory({
     mutation: { onSuccess: () => {
@@ -833,6 +920,7 @@ export default function Tasks() {
                     cat={cat}
                     countFor={countFor}
                     onDelete={() => setCatToDelete({ id: cat.id, name: cat.name })}
+                    onUpdate={(id, data) => updateCat({ id, data })}
                   />
                 ))}
               </div>

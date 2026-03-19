@@ -32,6 +32,39 @@ router.post("/", async (req, res) => {
   res.status(201).json({ ...cat, createdAt: cat.createdAt.toISOString() });
 });
 
+router.patch("/:id", async (req, res) => {
+  const userId = getUserId(req);
+  const id = Number(req.params.id);
+  const { name, icon } = req.body as { name?: string; icon?: string };
+  const [cat] = await db
+    .select()
+    .from(categoriesTable)
+    .where(and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId)));
+  if (!cat) {
+    res.status(404).json({ error: "Category not found" });
+    return;
+  }
+  const updates: Partial<typeof cat> = {};
+  if (name && name.trim() && name.trim() !== cat.name) {
+    await db
+      .update(tasksTable)
+      .set({ category: name.trim() })
+      .where(and(eq(tasksTable.category, cat.name), eq(tasksTable.userId, userId)));
+    updates.name = name.trim();
+  }
+  if (icon) updates.icon = icon;
+  if (Object.keys(updates).length === 0) {
+    res.json({ ...cat, createdAt: cat.createdAt.toISOString() });
+    return;
+  }
+  const [updated] = await db
+    .update(categoriesTable)
+    .set(updates)
+    .where(and(eq(categoriesTable.id, id), eq(categoriesTable.userId, userId)))
+    .returning();
+  res.json({ ...updated, createdAt: updated.createdAt.toISOString() });
+});
+
 router.delete("/:id", async (req, res) => {
   const userId = getUserId(req);
   const id = Number(req.params.id);

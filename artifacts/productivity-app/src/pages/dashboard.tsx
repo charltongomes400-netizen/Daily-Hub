@@ -130,7 +130,7 @@ export default function Dashboard() {
                 <span className="w-px h-3.5 bg-border/60" />
                 <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="font-medium text-foreground">${monthlyExpenses.toFixed(2)}</span>
+                  <span className="font-medium text-emerald-400">${monthlyExpenses.toFixed(2)}</span>
                   <span>this month</span>
                 </span>
                 {pendingTasks > 0 && (
@@ -155,16 +155,16 @@ export default function Dashboard() {
 
             {/* Upcoming Tasks */}
             <motion.div variants={fade} className="min-h-0 flex flex-col">
-              <Card className="bg-card border-border/40 flex flex-col h-full overflow-hidden">
+              <Card className="bg-gradient-to-b from-blue-500/8 to-transparent border-blue-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">Upcoming Tasks</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-blue-400">Upcoming Tasks</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {pendingTasks === 0 ? "All caught up" : `${pendingTasks} pending`}
                     </p>
                   </div>
                   <Link href="/tasks">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-400/60 hover:text-blue-300">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>
@@ -203,16 +203,16 @@ export default function Dashboard() {
 
             {/* Today's Workout */}
             <motion.div variants={fade} className="min-h-0 flex flex-col">
-              <Card className="bg-card border-border/40 flex flex-col h-full overflow-hidden">
+              <Card className="bg-gradient-to-b from-orange-500/8 to-transparent border-orange-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">Today's Workout</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-orange-400">Today's Workout</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {format(new Date(), 'EEEE')} · {weekTrainingDays} day{weekTrainingDays !== 1 ? "s" : ""}/week
                     </p>
                   </div>
                   <Link href="/gym">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-400/60 hover:text-orange-300">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>
@@ -262,14 +262,14 @@ export default function Dashboard() {
 
             {/* Latest Note */}
             <motion.div variants={fade} className="min-h-0 flex flex-col gap-3">
-              <Card className="bg-card border-border/40 flex flex-col flex-1 overflow-hidden">
+              <Card className="bg-gradient-to-b from-amber-500/8 to-transparent border-amber-500/20 flex flex-col flex-1 overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">Latest Note</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-amber-400">Latest Note</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">{notes.length} note{notes.length !== 1 ? "s" : ""} saved</p>
                   </div>
                   <Link href="/notes">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-400/60 hover:text-amber-300">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>
@@ -305,16 +305,16 @@ export default function Dashboard() {
 
             {/* Goals */}
             <motion.div variants={fade} className="min-h-0 flex flex-col">
-              <Card className="bg-card border-border/40 flex flex-col h-full overflow-hidden">
+              <Card className="bg-gradient-to-b from-pink-500/8 to-transparent border-pink-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">Goals</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-pink-400">Goals</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {completedGoals.length} of {goals.length} completed · {goalCompletionPct}%
                     </p>
                   </div>
                   <Link href="/goals">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-400/60 hover:text-pink-300">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>
@@ -331,7 +331,7 @@ export default function Dashboard() {
                       {goals.length > 0 && (
                         <div className="mb-3">
                           <div className="h-1 rounded-full bg-secondary/60 overflow-hidden">
-                            <div className="h-full rounded-full bg-primary transition-all duration-700"
+                            <div className="h-full rounded-full bg-pink-400 transition-all duration-700"
                               style={{ width: `${goalCompletionPct}%` }} />
                           </div>
                         </div>
@@ -341,7 +341,7 @@ export default function Dashboard() {
                           <div className="relative w-7 h-7 shrink-0">
                             <svg width="28" height="28" className="-rotate-90">
                               <circle cx="14" cy="14" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-border/50" />
-                              <circle cx="14" cy="14" r="10" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5"
+                              <circle cx="14" cy="14" r="10" fill="none" stroke="rgb(244 114 182)" strokeWidth="2.5"
                                 strokeDasharray={2 * Math.PI * 10}
                                 strokeDashoffset={2 * Math.PI * 10 * (1 - goal.progress / 100)}
                                 strokeLinecap="round" className="transition-all" />

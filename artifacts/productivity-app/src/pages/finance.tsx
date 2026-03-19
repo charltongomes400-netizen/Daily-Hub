@@ -5,6 +5,7 @@ import {
   useGetSubscriptions, useCreateSubscription, useUpdateSubscription, useDeleteSubscription
 } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +76,10 @@ async function fetchOwed(): Promise<OwedEntry[]> {
 }
 async function createOwed(data: Omit<OwedEntry, "id" | "createdAt" | "status">): Promise<OwedEntry> {
   const r = await fetch("/api/owed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-  if (!r.ok) throw new Error("Failed to create owed entry");
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(body?.error ?? "Failed to create owed entry");
+  }
   return r.json();
 }
 async function createOwedToOthers(data: Omit<OwedEntry, "id" | "createdAt" | "status">): Promise<OwedEntry> {
@@ -93,6 +97,7 @@ async function deleteOwed(id: number): Promise<void> {
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Finance() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isExpOpen, setIsExpOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [isOwedOpen, setIsOwedOpen] = useState(false);
@@ -138,7 +143,15 @@ export default function Finance() {
   });
   const createOwedToOthersMutation = useMutation({
     mutationFn: createOwedToOthers,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/owed"] }); setIsOwedToOthersOpen(false); owedToOthersForm.reset(); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/owed"] });
+      setIsOwedToOthersOpen(false);
+      owedToOthersForm.reset();
+      toast({ title: "Entry added", description: "Your debt has been recorded." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+    },
   });
 
   /* ── Forms ── */
@@ -717,14 +730,16 @@ export default function Finance() {
                   <DialogContent className="bg-card border-border/50 shadow-2xl">
                     <DialogHeader><DialogTitle>Track Money I Owe to Others</DialogTitle></DialogHeader>
                     <Form {...owedToOthersForm}>
-                      <form onSubmit={owedToOthersForm.handleSubmit(d => createOwedToOthersMutation.mutate({
-                        fromName: d.fromName,
-                        amount: d.amount,
-                        description: d.description,
-                        dueDate: d.dueDate ? new Date(d.dueDate).toISOString() : null,
-                        notes: d.notes || null,
-                        type: "sent",
-                      }))} className="space-y-4">
+                      <form onSubmit={owedToOthersForm.handleSubmit(d => {
+                        createOwedToOthersMutation.mutate({
+                          fromName: d.fromName,
+                          amount: d.amount,
+                          description: d.description,
+                          dueDate: d.dueDate ? new Date(d.dueDate).toISOString() : null,
+                          notes: d.notes || null,
+                          type: "sent",
+                        });
+                      })} className="space-y-4">
                         <FormField control={owedToOthersForm.control} name="fromName" render={({ field }) => (
                           <FormItem>
                             <FormLabel>To (Person / Company)</FormLabel>

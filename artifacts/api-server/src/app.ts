@@ -1,9 +1,10 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import session from "express-session";
 import passport from "passport";
 import connectPg from "connect-pg-simple";
 import { rateLimit } from "express-rate-limit";
+import { ZodError } from "zod";
 import router from "./routes";
 
 const PgStore = connectPg(session);
@@ -77,5 +78,15 @@ app.use("/api", (req, _res, next) => {
 });
 
 app.use("/api", router);
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof ZodError) {
+    res.status(400).json({ error: "Validation error", details: err.errors });
+    return;
+  }
+  const message = err instanceof Error ? err.message : "Internal server error";
+  console.error("[API Error]", err);
+  res.status(500).json({ error: message });
+});
 
 export default app;

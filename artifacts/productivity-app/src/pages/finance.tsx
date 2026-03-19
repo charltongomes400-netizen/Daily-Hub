@@ -795,10 +795,7 @@ export default function Finance() {
                             <FormItem>
                               <FormLabel>Amount ($)</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm text-orange-400">−</span>
-                                  <Input type="number" step="0.01" className="bg-background pl-7" {...field} />
-                                </div>
+                                <Input type="number" step="0.01" className="bg-background" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

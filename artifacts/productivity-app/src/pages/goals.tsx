@@ -159,7 +159,7 @@ function GoalCelebration() {
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: [0, 1.18, 0.95, 1, 1, 1, 0.9, 0], opacity: [0, 1, 1, 1, 1, 1, 1, 0] }}
-          transition={{ duration: 3.2, times: [0, 0.12, 0.2, 0.28, 0.55, 0.75, 0.88, 1], ease: "easeInOut" }}
+          transition={{ duration: 6.0, times: [0, 0.06, 0.11, 0.16, 0.45, 0.72, 0.88, 1], ease: "easeInOut" }}
           className="flex flex-col items-center gap-4 bg-card/90 backdrop-blur-md rounded-3xl px-12 py-9 border border-emerald-500/40 shadow-2xl"
           style={{ boxShadow: "0 0 60px 10px rgba(16,185,129,0.25), 0 25px 50px rgba(0,0,0,0.5)" }}
         >
@@ -175,7 +175,7 @@ function GoalCelebration() {
             <motion.div
               className="absolute inset-0 rounded-full"
               animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
-              transition={{ duration: 1.2, repeat: 2, repeatType: "loop", delay: 0.3 }}
+              transition={{ duration: 1.2, repeat: 4, repeatType: "loop", delay: 0.3 }}
               style={{ background: "radial-gradient(circle, #fbbf24 0%, transparent 70%)" }}
             />
           </motion.div>
@@ -229,11 +229,11 @@ function GoalCelebration() {
             rotate: p.rotate,
           }}
           transition={{
-            x: { duration: 3.2, delay: p.delay, ease: "easeOut" },
-            y: { duration: 3.2, delay: p.delay, times: [0, p.peakFrac, 1], ease: ["easeOut", "easeIn"] },
-            opacity: { duration: 3.2, delay: p.delay, times: [0, 0.4, 0.75, 1] },
-            scale:   { duration: 3.2, delay: p.delay, times: [0, 0.3, 0.7, 1] },
-            rotate:  { duration: 3.2, delay: p.delay, ease: "linear" },
+            x: { duration: 5.5, delay: p.delay, ease: "easeOut" },
+            y: { duration: 5.5, delay: p.delay, times: [0, p.peakFrac, 1], ease: ["easeOut", "easeIn"] },
+            opacity: { duration: 5.5, delay: p.delay, times: [0, 0.35, 0.78, 1] },
+            scale:   { duration: 5.5, delay: p.delay, times: [0, 0.25, 0.65, 1] },
+            rotate:  { duration: 5.5, delay: p.delay, ease: "linear" },
           }}
         />
       ))}
@@ -340,7 +340,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
             <button
               onClick={() => {
                 setCelebrating(true);
-                setTimeout(() => setCelebrating(false), 3800);
+                setTimeout(() => setCelebrating(false), 7000);
                 onComplete(goal.id);
               }}
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold whitespace-nowrap transition-all animate-pulse hover:animate-none border border-emerald-500/20"

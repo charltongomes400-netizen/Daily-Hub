@@ -197,7 +197,15 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
               }}
             />
           </div>
-          {!isTaskSynced && (
+          {!isTaskSynced && goal.progress >= 100 ? (
+            <button
+              onClick={() => onComplete(goal.id)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs font-bold whitespace-nowrap transition-all animate-pulse hover:animate-none border border-emerald-500/20"
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Seal the Win
+            </button>
+          ) : !isTaskSynced ? (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onProgress(goal.id, Math.max(0, goal.progress - 10))}
@@ -208,7 +216,7 @@ function GoalCard({ goal, onProgress, onComplete, onDelete, onEdit, onAddTasks }
                 className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors text-xs font-bold"
               >+</button>
             </div>
-          )}
+          ) : null}
           {isTaskSynced && (
             <span className="text-xs text-muted-foreground whitespace-nowrap">auto</span>
           )}

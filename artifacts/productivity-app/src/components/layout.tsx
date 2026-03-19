@@ -135,44 +135,24 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* ── Main content column ── */}
       <div className="flex flex-col flex-1 min-w-0 z-10 relative overflow-hidden">
-        {/* ── Header ── */}
-        <header className="flex items-center h-14 md:h-16 px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-20 shrink-0">
-          <Link href="/" className="flex items-center gap-2.5 group lg:hidden">
-            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-              <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
+        {/* ── Mobile-only top bar (launcher access) ── */}
+        <div className="flex items-center justify-between h-12 px-4 lg:hidden shrink-0 border-b border-border/30 bg-background/70 backdrop-blur-md sticky top-0 z-20">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/30">
+              <span className="text-primary-foreground text-[10px] font-bold tracking-tight">PH</span>
             </div>
-            <span className="font-display font-bold text-foreground hidden sm:block text-sm">
+            <span className="font-display font-bold text-foreground text-sm hidden sm:block">
               Productivity Hub
             </span>
           </Link>
-
-          <div className="flex-1 flex items-center justify-center lg:justify-start lg:pl-2">
-            {currentApp && (
-              <span className="text-sm font-semibold text-foreground/80 tracking-wide lg:text-base">
-                {currentApp.title}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {user && (
-              <button
-                onClick={() => { logout(); }}
-                title="Sign out"
-                className="hidden lg:flex w-9 h-9 items-center justify-center rounded-xl bg-secondary/70 hover:bg-red-500/10 border border-border/50 text-muted-foreground hover:text-red-400 transition-all active:scale-95"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              onClick={() => setLauncherOpen(true)}
-              aria-label="Open app launcher"
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95 lg:hidden"
-            >
-              <LayoutGrid className="w-5 h-5" />
-            </button>
-          </div>
-        </header>
+          <button
+            onClick={() => setLauncherOpen(true)}
+            aria-label="Open app launcher"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-secondary/70 hover:bg-secondary border border-border/50 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+          >
+            <LayoutGrid className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* ── Page content ── */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative">

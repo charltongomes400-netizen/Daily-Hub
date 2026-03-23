@@ -471,7 +471,7 @@ export default function Gratitude() {
 
               {entries.length > 0 && (
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                  {entries.sort((a, b) => a.date.localeCompare(b.date)).map(entry => (
+                  {[...entries].sort((a, b) => a.date.localeCompare(b.date)).map(entry => (
                     <div key={entry.id} className="flex items-start gap-2 px-3 py-2 rounded-lg"
                       style={{ background: "rgba(10,14,50,0.50)", border: "1px solid rgba(100,130,255,0.08)" }}>
                       <span className="text-[10px] font-bold text-rose-400/60 shrink-0 mt-0.5 w-8">

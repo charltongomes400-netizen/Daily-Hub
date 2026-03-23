@@ -91,13 +91,13 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="h-full overflow-hidden grid p-4 gap-4 animate-pulse" style={{ gridTemplateRows: 'auto minmax(0,1fr) minmax(0,1fr)' }}>
-          <div className="h-20 bg-card border border-border/40 rounded-2xl" />
-          <div className="grid grid-cols-2 gap-4">
-            {[1,2].map(i => <div key={i} className="bg-card border border-border/40 rounded-2xl" />)}
+        <div className="flex flex-col gap-3 p-3 animate-pulse lg:grid lg:h-full lg:overflow-hidden lg:gap-4 lg:p-4" style={{ gridTemplateRows: 'auto minmax(0,1fr) minmax(0,1fr)' }}>
+          <div className="h-16 sm:h-20 bg-card border border-border/40 rounded-2xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+            {[1,2].map(i => <div key={i} className="min-h-[220px] lg:min-h-0 bg-card border border-border/40 rounded-2xl" />)}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {[1,2].map(i => <div key={i} className="bg-card border border-border/40 rounded-2xl" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+            {[1,2].map(i => <div key={i} className="min-h-[200px] lg:min-h-0 bg-card border border-border/40 rounded-2xl" />)}
           </div>
         </div>
       </Layout>
@@ -115,35 +115,32 @@ export default function Dashboard() {
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
         <div
-          className="h-full overflow-hidden grid p-4 gap-4"
+          className="flex flex-col gap-3 p-3 overflow-y-auto lg:grid lg:h-full lg:overflow-hidden lg:gap-4 lg:p-4"
           style={{ gridTemplateRows: 'auto minmax(0,1fr) minmax(0,1fr)' }}
         >
           {/* ── Header ── */}
           <motion.div variants={fade} initial="hidden" animate="show"
-            className="flex items-center justify-between px-6 py-5 rounded-2xl bg-card border border-border/40">
-            <div>
-              <h1 className="text-2xl font-display font-bold tracking-tight text-foreground leading-tight">
+            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-4 sm:px-6 sm:py-5 rounded-2xl bg-card border border-border/40">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight text-foreground leading-tight">
                 {firstName ? `Good to see you, ${firstName}.` : "Welcome back."}
               </h1>
-              <div className="flex items-center gap-3 mt-1.5">
-                <p className="text-sm text-muted-foreground">{format(now, 'EEEE, MMMM d')}</p>
-                <span className="w-px h-3.5 bg-border/60" />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                <p className="text-sm text-muted-foreground">{format(now, 'EEEE, MMM d')}</p>
+                <span className="w-px h-3.5 bg-border/60 hidden sm:block" />
                 <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                  <Wallet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span className="font-medium text-emerald-400">${monthlyExpenses.toFixed(2)}</span>
                   <span>this month</span>
                 </span>
                 {pendingTasks > 0 && (
-                  <>
-                    <span className="w-px h-3.5 bg-border/60" />
-                    <span className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending
-                    </span>
-                  </>
+                  <span className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending
+                  </span>
                 )}
               </div>
             </div>
-            <div className="text-right">
+            <div className="hidden sm:block text-right shrink-0">
               <div className="text-3xl font-display font-bold tabular-nums text-foreground/90 leading-none">
                 {format(now, 'HH:mm')}
               </div>
@@ -151,10 +148,10 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ── Row 2: Tasks · Gym ── */}
-          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 gap-4 min-h-0">
+          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 lg:min-h-0">
 
             {/* Upcoming Tasks */}
-            <motion.div variants={fade} className="min-h-0 flex flex-col">
+            <motion.div variants={fade} className="min-h-[220px] lg:min-h-0 flex flex-col">
               <Card className="bg-gradient-to-b from-blue-500/8 to-transparent border-blue-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
@@ -202,7 +199,7 @@ export default function Dashboard() {
             </motion.div>
 
             {/* Today's Workout */}
-            <motion.div variants={fade} className="min-h-0 flex flex-col">
+            <motion.div variants={fade} className="min-h-[220px] lg:min-h-0 flex flex-col">
               <Card className="bg-gradient-to-b from-orange-500/8 to-transparent border-orange-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
@@ -258,10 +255,10 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ── Row 3: Notes · Goals ── */}
-          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 gap-4 min-h-0">
+          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 lg:min-h-0">
 
             {/* Latest Note */}
-            <motion.div variants={fade} className="min-h-0 flex flex-col gap-3">
+            <motion.div variants={fade} className="min-h-[200px] lg:min-h-0 flex flex-col gap-3">
               <Card className="bg-gradient-to-b from-amber-500/8 to-transparent border-amber-500/20 flex flex-col flex-1 overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>
@@ -304,7 +301,7 @@ export default function Dashboard() {
             </motion.div>
 
             {/* Goals */}
-            <motion.div variants={fade} className="min-h-0 flex flex-col">
+            <motion.div variants={fade} className="min-h-[200px] lg:min-h-0 flex flex-col">
               <Card className="bg-gradient-to-b from-pink-500/8 to-transparent border-pink-500/20 flex flex-col h-full overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between px-5 py-4 pb-3 shrink-0">
                   <div>

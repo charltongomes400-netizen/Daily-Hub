@@ -197,24 +197,26 @@ export default function Dashboard() {
     <>
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
-        <div className="flex flex-col gap-4 p-4 h-full overflow-hidden">
+        <div className="flex flex-col gap-4 p-4 h-full">
 
           {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">
-            <div className="relative overflow-hidden rounded-2xl"
+            <div className="relative rounded-2xl"
               style={{
                 background: "linear-gradient(127deg, rgba(25,15,80,0.95) 0%, rgba(8,25,80,0.90) 50%, rgba(6,11,40,0.95) 100%)",
                 border: "1px solid rgba(120,100,255,0.35)",
                 boxShadow: "0 0 60px rgba(100,60,255,0.18), 0 0 120px rgba(40,80,255,0.10), inset 0 1px 0 rgba(255,255,255,0.06)",
               }}>
 
-              {/* animated ambient glows */}
-              <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(120,80,255,0.22) 0%, transparent 70%)" }} />
-              <div className="absolute -bottom-10 left-1/3 w-48 h-48 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(50,100,255,0.16) 0%, transparent 70%)" }} />
-              <div className="absolute top-0 left-0 right-0 h-px"
-                style={{ background: "linear-gradient(90deg, transparent, rgba(150,120,255,0.5), transparent)" }} />
+              {/* animated ambient glows (clipped to card bounds) */}
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(120,80,255,0.22) 0%, transparent 70%)" }} />
+                <div className="absolute -bottom-10 left-1/3 w-48 h-48 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(50,100,255,0.16) 0%, transparent 70%)" }} />
+                <div className="absolute top-0 left-0 right-0 h-px"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(150,120,255,0.5), transparent)" }} />
+              </div>
 
               <div className="relative flex items-center justify-between px-6 py-5 gap-4">
                 <div className="flex-1 min-w-0">

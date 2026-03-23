@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import {
   Wallet, ArrowRight, Dumbbell, Moon, Flame, StickyNote, Target,
-  CheckCircle2, Settings2, Eye, EyeOff, X, Circle,
+  CheckCircle2, Settings2, Eye, EyeOff, X,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,57 +34,71 @@ function getRestDays(): Set<number> {
   return new Set();
 }
 
-/* ── Small reusable pieces ─────────────────────────────────── */
-function IconBox({ children, color }: { children: React.ReactNode; color: string }) {
+/* ─────────────────────────────────────── reusable pieces ──── */
+
+/* Vision UI style icon box */
+function IconBox({ children, bg, shadow }: { children: React.ReactNode; bg: string; shadow: string }) {
   return (
-    <div className={`p-3 rounded-2xl shadow-lg ${color} flex items-center justify-center shrink-0`}>
+    <div className={`p-3 rounded-2xl flex items-center justify-center shrink-0 ${bg}`}
+      style={{ boxShadow: shadow }}>
       {children}
     </div>
   );
 }
 
-function StatTile({ href, label, sub, value, icon, iconBg }: {
-  href: string; label: string; sub: string; value: React.ReactNode; icon: React.ReactNode; iconBg: string;
+/* Vision UI stat tile — dark gradient panel + colored icon box */
+function StatTile({ href, label, sub, value, icon, iconBg, iconShadow, borderGlow }: {
+  href: string; label: string; sub: string; value: React.ReactNode;
+  icon: React.ReactNode; iconBg: string; iconShadow: string; borderGlow: string;
 }) {
   return (
     <Link href={href}>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.15 }}
-        className="group flex items-start justify-between gap-3 p-5 rounded-2xl bg-card border border-border/60
-          hover:border-border transition-all cursor-pointer"
+      <motion.div whileHover={{ y: -3, scale: 1.01 }} transition={{ duration: 0.18 }}
+        className="group flex items-start justify-between gap-3 p-5 rounded-2xl cursor-pointer transition-all"
+        style={{
+          background: "linear-gradient(127deg, rgba(6,11,40,0.85) 20%, rgba(10,14,35,0.55) 77%)",
+          border: `1px solid ${borderGlow}`,
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 2px 20px rgba(0,0,0,0.4)",
+        }}
       >
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide leading-none">{label}</p>
-          <div className="text-[2rem] font-display font-bold text-foreground tabular-nums leading-tight mt-2">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1 leading-none">{sub}</p>
+          <p className="text-[11px] font-semibold text-blue-200/50 uppercase tracking-widest leading-none">{label}</p>
+          <div className="text-[2rem] font-display font-bold text-white tabular-nums leading-tight mt-2">{value}</div>
+          <p className="text-[11px] text-blue-200/40 mt-1 leading-none">{sub}</p>
         </div>
-        <IconBox color={iconBg}>{icon}</IconBox>
+        <IconBox bg={iconBg} shadow={iconShadow}>{icon}</IconBox>
       </motion.div>
     </Link>
   );
 }
 
-/* ── Widget card shell ─────────────────────────────────────── */
-function WidgetCard({ gradient, border, glow, headerAccent, title, sub, href, arrowColor, children }: {
-  gradient: string; border: string; glow: string; headerAccent: string; title: string; sub: string;
-  href: string; arrowColor: string; children: React.ReactNode;
+/* Vision UI widget card */
+function WidgetCard({ headerAccent, accentRgb, title, sub, href, children }: {
+  headerAccent: string; accentRgb: string; title: string; sub: string; href: string; children: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col h-full rounded-2xl border ${border} bg-gradient-to-b ${gradient} overflow-hidden`}
-      style={{ boxShadow: glow }}>
-      <div className="flex items-center justify-between px-5 py-4 pb-3 shrink-0">
+    <div className="flex flex-col h-full rounded-2xl overflow-hidden"
+      style={{
+        background: "linear-gradient(127deg, rgba(6,11,40,0.92) 20%, rgba(10,14,35,0.60) 77%)",
+        border: `1px solid rgba(${accentRgb}, 0.30)`,
+        backdropFilter: "blur(12px)",
+        boxShadow: `0 0 40px rgba(${accentRgb}, 0.07), 0 2px 20px rgba(0,0,0,0.4)`,
+      }}>
+      {/* header stripe */}
+      <div className="flex items-center justify-between px-5 py-4 pb-3 shrink-0"
+        style={{ borderBottom: `1px solid rgba(${accentRgb}, 0.15)` }}>
         <div>
-          <p className={`text-sm font-semibold ${headerAccent}`}>{title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+          <p className={`text-sm font-bold ${headerAccent}`}>{title}</p>
+          <p className="text-[11px] text-blue-200/40 mt-0.5">{sub}</p>
         </div>
         <Link href={href}>
-          <div className={`p-1.5 rounded-xl ${arrowColor} hover:opacity-100 opacity-50 transition-opacity`}>
+          <div className={`p-1.5 rounded-xl ${headerAccent} opacity-40 hover:opacity-90 transition-opacity`}>
             <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </Link>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4 pt-0">{children}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4 pt-3">{children}</div>
     </div>
   );
 }
@@ -92,22 +106,23 @@ function WidgetCard({ gradient, border, glow, headerAccent, title, sub, href, ar
 function EmptyState({ icon, label, linkHref, linkLabel }: { icon: React.ReactNode; label: string; linkHref: string; linkLabel: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2 text-center py-6">
-      <div className="opacity-30">{icon}</div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <Link href={linkHref}><span className="text-xs text-primary hover:underline cursor-pointer">{linkLabel}</span></Link>
+      <div className="opacity-25">{icon}</div>
+      <p className="text-xs text-blue-200/40">{label}</p>
+      <Link href={linkHref}><span className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">{linkLabel}</span></Link>
     </div>
   );
 }
 
 function RowItem({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-secondary/50 border border-border/30">
+    <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+      style={{ background: "rgba(10,14,50,0.60)", border: "1px solid rgba(100,130,255,0.12)" }}>
       {children}
     </div>
   );
 }
 
-/* ── Main page ─────────────────────────────────────────────── */
+/* ─────────────────────────────────────── main component ────── */
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.name?.split(" ")[0] ?? "";
@@ -157,19 +172,19 @@ export default function Dashboard() {
   const pendingTasks    = tasks.filter(t => !t.completed).length;
   const isLoading       = lt || le || ls;
 
-  const fade    = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 280, damping: 26 } } };
-  const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };
+  const fade    = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 260, damping: 24 } } };
+  const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
 
   if (isLoading) {
     return (
       <Layout>
         <div className="p-4 flex flex-col gap-4 animate-pulse h-full">
-          <div className="h-36 bg-card border border-border/40 rounded-2xl" />
+          <div className="h-36 rounded-2xl" style={{ background: "rgba(10,14,50,0.7)", border: "1px solid rgba(100,130,255,0.15)" }} />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[1,2,3,4].map(i => <div key={i} className="h-28 bg-card border border-border/40 rounded-2xl" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl" style={{ background: "rgba(10,14,50,0.7)" }} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-            {[1,2,3,4].map(i => <div key={i} className="min-h-[160px] bg-card border border-border/40 rounded-2xl" />)}
+            {[1,2,3,4].map(i => <div key={i} className="min-h-[160px] rounded-2xl" style={{ background: "rgba(10,14,50,0.7)" }} />)}
           </div>
         </div>
       </Layout>
@@ -184,43 +199,61 @@ export default function Dashboard() {
       <Layout>
         <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto lg:overflow-hidden">
 
-          {/* ── HERO CARD ──────────────────────────────────────────── */}
+          {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">
-            <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/20 via-blue-600/10 to-card"
-              style={{ boxShadow: "0 0 40px rgba(124,58,237,0.12), 0 0 80px rgba(59,130,246,0.06)" }}>
+            <div className="relative overflow-hidden rounded-2xl"
+              style={{
+                background: "linear-gradient(127deg, rgba(25,15,80,0.95) 0%, rgba(8,25,80,0.90) 50%, rgba(6,11,40,0.95) 100%)",
+                border: "1px solid rgba(120,100,255,0.35)",
+                boxShadow: "0 0 60px rgba(100,60,255,0.18), 0 0 120px rgba(40,80,255,0.10), inset 0 1px 0 rgba(255,255,255,0.06)",
+              }}>
 
-              {/* decorative orbs */}
-              <div className="absolute -top-8 -right-8 w-48 h-48 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-6 right-20 w-32 h-32 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
+              {/* animated ambient glows */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(120,80,255,0.22) 0%, transparent 70%)" }} />
+              <div className="absolute -bottom-10 left-1/3 w-48 h-48 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(50,100,255,0.16) 0%, transparent 70%)" }} />
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: "linear-gradient(90deg, transparent, rgba(150,120,255,0.5), transparent)" }} />
 
               <div className="relative flex items-center justify-between px-6 py-5 gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-violet-300/70 uppercase tracking-widest mb-1">{format(now, 'EEEE, MMMM d')}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-1.5"
+                    style={{ color: "rgba(160,140,255,0.70)" }}>
+                    {format(now, 'EEEE, MMMM d')}
+                  </p>
                   <h1 className="text-2xl sm:text-3xl font-display font-bold text-white leading-tight">
-                    {firstName ? `Good to see you, ${firstName}.` : "Welcome back."}
+                    {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
                   </h1>
-                  <p className="text-sm text-muted-foreground mt-1.5">
+                  <p className="text-sm mt-2" style={{ color: "rgba(180,190,255,0.55)" }}>
                     {pendingTasks > 0
-                      ? <><span className="text-foreground font-semibold">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending · <span className="text-emerald-400 font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
-                      : <>All caught up · <span className="text-emerald-400 font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
+                      ? <><span className="text-white font-semibold">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
+                      : <>All caught up · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
                     }
                   </p>
                 </div>
+
                 <div className="flex items-center gap-3 shrink-0">
                   {/* Clock */}
                   <div className="hidden sm:flex flex-col items-end">
-                    <p className="text-4xl font-display font-bold tabular-nums text-white/90 leading-none">
+                    <p className="text-4xl font-display font-bold tabular-nums leading-none"
+                      style={{ color: "rgba(220,225,255,0.95)" }}>
                       {format(now, 'h:mm')}
                     </p>
-                    <p className="text-sm font-semibold text-muted-foreground mt-0.5">{format(now, 'aa')}</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "rgba(160,170,255,0.50)" }}>
+                      {format(now, 'aa')}
+                    </p>
                   </div>
+
                   {/* Customize */}
                   <div ref={customizeRef} className="relative">
-                    <button
-                      onClick={() => setShowCustomize(s => !s)}
-                      className={`p-2.5 rounded-xl border transition-all ${showCustomize ? "bg-white/10 border-white/20 text-white" : "border-white/10 text-white/40 hover:bg-white/10 hover:text-white/80"}`}
-                      title="Customise dashboard"
-                    >
+                    <button onClick={() => setShowCustomize(s => !s)} title="Customise dashboard"
+                      className="p-2.5 rounded-xl transition-all"
+                      style={{
+                        background: showCustomize ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: showCustomize ? "white" : "rgba(200,210,255,0.45)",
+                      }}>
                       <Settings2 className="w-4 h-4" />
                     </button>
                     <AnimatePresence>
@@ -230,25 +263,26 @@ export default function Dashboard() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 6, scale: 0.96 }}
                           transition={{ duration: 0.14 }}
-                          className="absolute top-full right-0 mt-2 w-52 bg-popover border border-border/60 rounded-xl shadow-2xl z-50 overflow-hidden"
+                          className="absolute top-full right-0 mt-2 w-52 rounded-xl shadow-2xl z-50 overflow-hidden"
+                          style={{ background: "rgba(10,14,50,0.96)", border: "1px solid rgba(100,130,255,0.25)", backdropFilter: "blur(20px)" }}
                         >
-                          <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
-                            <span className="text-xs font-semibold text-foreground">Visible widgets</span>
-                            <button onClick={() => setShowCustomize(false)} className="text-muted-foreground hover:text-foreground">
+                          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(100,130,255,0.15)" }}>
+                            <span className="text-xs font-bold text-white/80">Visible widgets</span>
+                            <button onClick={() => setShowCustomize(false)} className="text-blue-200/40 hover:text-white/80">
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                           {WIDGET_META.map(w => (
                             <button key={w.id} onClick={() => toggleWidget(w.id)}
-                              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-secondary/60 transition-colors group">
-                              <span className={`text-sm font-medium ${widgets[w.id] ? w.color : "text-muted-foreground/50"}`}>{w.label}</span>
+                              className="w-full flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/5">
+                              <span className={`text-sm font-medium ${widgets[w.id] ? w.color : "text-blue-200/30"}`}>{w.label}</span>
                               {widgets[w.id]
-                                ? <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                                : <EyeOff className="w-3.5 h-3.5 text-muted-foreground/30" />}
+                                ? <Eye className="w-3.5 h-3.5 text-blue-200/40" />
+                                : <EyeOff className="w-3.5 h-3.5 text-blue-200/20" />}
                             </button>
                           ))}
-                          <div className="px-4 py-2.5 border-t border-border/30">
-                            <button onClick={() => setShowWelcome(true)} className="w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors text-left">
+                          <div className="px-4 py-2.5" style={{ borderTop: "1px solid rgba(100,130,255,0.12)" }}>
+                            <button onClick={() => setShowWelcome(true)} className="w-full text-[10px] text-left text-blue-200/25 hover:text-blue-200/60 transition-colors">
                               ▶ preview welcome animation
                             </button>
                           </div>
@@ -261,39 +295,50 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ── STAT TILES (Vision UI style icon-box) ─────────────── */}
-          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+          {/* ── STAT TILES ───────────────────────────────────────── */}
+          <motion.div variants={stagger} initial="hidden" animate="show"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+
             <motion.div variants={fade}>
-              <StatTile href="/tasks" label="Tasks pending" sub="across all lists"
+              <StatTile href="/tasks" label="Tasks Pending" sub="across all lists"
                 value={pendingTasks}
-                iconBg="bg-blue-500 shadow-blue-500/40"
+                iconBg="bg-blue-500"
+                iconShadow="0 4px 20px rgba(59,130,246,0.50)"
+                borderGlow="rgba(59,130,246,0.28)"
                 icon={<CheckCircle2 className="w-5 h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/finance" label="Spent this month" sub="total expenses"
-                value={<span className="text-2xl">${monthSpend.toFixed(0)}</span>}
-                iconBg="bg-emerald-500 shadow-emerald-500/40"
+              <StatTile href="/finance" label="Spent This Month" sub="total expenses"
+                value={<>${monthSpend.toFixed(0)}</>}
+                iconBg="bg-emerald-500"
+                iconShadow="0 4px 20px rgba(16,185,129,0.50)"
+                borderGlow="rgba(16,185,129,0.28)"
                 icon={<Wallet className="w-5 h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/goals" label="Goals complete" sub={`${doneGoals.length} of ${goals.length} goals`}
-                value={<>{goalPct}<span className="text-lg font-semibold text-muted-foreground">%</span></>}
-                iconBg="bg-pink-500 shadow-pink-500/40"
+              <StatTile href="/goals" label="Goals Complete" sub={`${doneGoals.length} of ${goals.length} total`}
+                value={<>{goalPct}<span className="text-2xl text-white/40">%</span></>}
+                iconBg="bg-pink-500"
+                iconShadow="0 4px 20px rgba(236,72,153,0.50)"
+                borderGlow="rgba(236,72,153,0.28)"
                 icon={<Target className="w-5 h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/gym" label="Today's exercises" sub={isTodayRest ? "rest day" : `${weekDays} days/week`}
-                value={isTodayRest ? <Moon className="w-7 h-7 text-muted-foreground/50 inline" /> : todaysExercises.length}
-                iconBg="bg-orange-500 shadow-orange-500/40"
+              <StatTile href="/gym" label="Today's Exercises" sub={isTodayRest ? "rest day" : `${weekDays} days/week`}
+                value={isTodayRest ? <Moon className="w-7 h-7 inline" style={{ color: "rgba(200,210,255,0.30)" }} /> : todaysExercises.length}
+                iconBg="bg-orange-500"
+                iconShadow="0 4px 20px rgba(249,115,22,0.50)"
+                borderGlow="rgba(249,115,22,0.28)"
                 icon={<Dumbbell className="w-5 h-5 text-white" />}
               />
             </motion.div>
+
           </motion.div>
 
-          {/* ── WIDGET CARDS ───────────────────────────────────────── */}
+          {/* ── WIDGET CARDS ─────────────────────────────────────── */}
           {visibleWidgets.length > 0 ? (
             <motion.div
               variants={stagger} initial="hidden" animate="show"
@@ -305,18 +350,11 @@ export default function Dashboard() {
                 {/* Tasks */}
                 {widgets.tasks && (
                   <motion.div key="tasks" variants={fade} layout className="min-h-[200px] lg:min-h-0">
-                    <WidgetCard
-                      gradient="from-blue-500/12 to-transparent"
-                      border="border-blue-500/25"
-                      glow="0 0 30px rgba(59,130,246,0.08)"
-                      headerAccent="text-blue-400"
-                      title="Upcoming Tasks"
-                      sub={pendingTasks === 0 ? "All caught up" : `${pendingTasks} pending`}
-                      href="/tasks"
-                      arrowColor="text-blue-400"
-                    >
+                    <WidgetCard accentRgb="59,130,246" headerAccent="text-blue-400"
+                      title="Upcoming Tasks" sub={pendingTasks === 0 ? "All caught up" : `${pendingTasks} pending`}
+                      href="/tasks">
                       {pendingTasks === 0 ? (
-                        <EmptyState icon={<CheckCircle2 className="w-9 h-9 text-blue-400" />} label="No pending tasks right now." linkHref="/tasks" linkLabel="Go to Tasks →" />
+                        <EmptyState icon={<CheckCircle2 className="w-9 h-9 text-blue-400" />} label="No pending tasks." linkHref="/tasks" linkLabel="Go to Tasks →" />
                       ) : (
                         <div className="space-y-1.5">
                           {tasks.filter(t => !t.completed).sort((a, b) => {
@@ -326,17 +364,17 @@ export default function Dashboard() {
                           }).slice(0, 8).map(task => (
                             <RowItem key={task.id}>
                               <div className="flex flex-col min-w-0">
-                                <span className="text-xs font-medium text-foreground truncate">{task.title}</span>
+                                <span className="text-xs font-medium text-white/85 truncate">{task.title}</span>
                                 {task.deadline && (
-                                  <span className={`text-[10px] mt-0.5 ${isAfter(new Date(), new Date(task.deadline)) ? "text-red-400" : "text-muted-foreground"}`}>
+                                  <span className={`text-[10px] mt-0.5 ${isAfter(new Date(), new Date(task.deadline)) ? "text-red-400" : "text-blue-200/40"}`}>
                                     Due {format(new Date(task.deadline), 'MMM d')}
                                   </span>
                                 )}
                               </div>
-                              <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold capitalize shrink-0 border
-                                ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : ''}
-                                ${task.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : ''}
-                                ${task.priority === 'low' ? 'bg-border/40 text-muted-foreground border-border/30' : ''}
+                              <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold capitalize shrink-0
+                                ${task.priority === 'high' ? 'bg-red-500/15 text-red-400' : ''}
+                                ${task.priority === 'medium' ? 'bg-yellow-500/15 text-yellow-400' : ''}
+                                ${task.priority === 'low' ? 'text-blue-200/35' : ''}
                               `}>{task.priority}</span>
                             </RowItem>
                           ))}
@@ -349,37 +387,30 @@ export default function Dashboard() {
                 {/* Gym */}
                 {widgets.gym && (
                   <motion.div key="gym" variants={fade} layout className="min-h-[200px] lg:min-h-0">
-                    <WidgetCard
-                      gradient="from-orange-500/12 to-transparent"
-                      border="border-orange-500/25"
-                      glow="0 0 30px rgba(249,115,22,0.08)"
-                      headerAccent="text-orange-400"
-                      title="Today's Workout"
-                      sub={`${format(new Date(), 'EEEE')} · ${weekDays} day${weekDays !== 1 ? "s" : ""}/week`}
-                      href="/gym"
-                      arrowColor="text-orange-400"
-                    >
+                    <WidgetCard accentRgb="249,115,22" headerAccent="text-orange-400"
+                      title="Today's Workout" sub={`${format(new Date(), 'EEEE')} · ${weekDays} day${weekDays !== 1 ? "s" : ""}/week`}
+                      href="/gym">
                       {isTodayRest ? (
-                        <EmptyState icon={<Moon className="w-9 h-9 text-muted-foreground" />} label="Rest day — recovery is part of the plan." linkHref="/gym" linkLabel="View schedule →" />
+                        <EmptyState icon={<Moon className="w-9 h-9 text-blue-200/50" />} label="Rest day — recovery is part of the plan." linkHref="/gym" linkLabel="View schedule →" />
                       ) : todaysExercises.length === 0 ? (
                         <EmptyState icon={<Dumbbell className="w-9 h-9 text-orange-400" />} label="No workout planned today." linkHref="/gym" linkLabel="Plan it →" />
                       ) : (
                         <div className="space-y-1.5">
                           {todaysExercises.slice(0, 8).map(ex => (
                             <RowItem key={ex.id}>
-                              <span className="text-xs font-medium text-foreground truncate">{ex.name}</span>
+                              <span className="text-xs font-medium text-white/85 truncate">{ex.name}</span>
                               {(ex.sets || ex.reps) && (
-                                <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                                <span className="text-[10px] text-blue-200/40 shrink-0 ml-2">
                                   {ex.sets && ex.reps ? `${ex.sets}×${ex.reps}` : ex.sets ? `${ex.sets} sets` : `${ex.reps} reps`}
                                   {ex.weight ? ` @ ${ex.weight}` : ""}
                                 </span>
                               )}
                             </RowItem>
                           ))}
-                          {todaysExercises.length > 8 && <p className="text-[10px] text-muted-foreground text-center pt-1">+{todaysExercises.length - 8} more</p>}
+                          {todaysExercises.length > 8 && <p className="text-[10px] text-blue-200/35 text-center pt-1">+{todaysExercises.length - 8} more</p>}
                           <div className="flex items-center gap-1.5 pt-1">
                             <Flame className="w-3 h-3 text-orange-400" />
-                            <span className="text-[10px] text-muted-foreground">{todaysExercises.length} exercise{todaysExercises.length !== 1 ? "s" : ""}</span>
+                            <span className="text-[10px] text-blue-200/40">{todaysExercises.length} exercise{todaysExercises.length !== 1 ? "s" : ""}</span>
                           </div>
                         </div>
                       )}
@@ -390,26 +421,20 @@ export default function Dashboard() {
                 {/* Notes */}
                 {widgets.notes && (
                   <motion.div key="notes" variants={fade} layout className="min-h-[200px] lg:min-h-0">
-                    <WidgetCard
-                      gradient="from-amber-500/12 to-transparent"
-                      border="border-amber-500/25"
-                      glow="0 0 30px rgba(245,158,11,0.08)"
-                      headerAccent="text-amber-400"
-                      title="Latest Note"
-                      sub={`${notes.length} note${notes.length !== 1 ? "s" : ""} saved`}
-                      href="/notes"
-                      arrowColor="text-amber-400"
-                    >
+                    <WidgetCard accentRgb="245,158,11" headerAccent="text-amber-400"
+                      title="Latest Note" sub={`${notes.length} note${notes.length !== 1 ? "s" : ""} saved`}
+                      href="/notes">
                       {!latestNote ? (
                         <EmptyState icon={<StickyNote className="w-9 h-9 text-amber-400" />} label="No notes yet." linkHref="/notes" linkLabel="Create one →" />
                       ) : (
-                        <div className="h-full p-3 rounded-xl bg-amber-500/6 border border-amber-500/15">
+                        <div className="h-full p-3 rounded-xl"
+                          style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}>
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <h3 className="font-semibold text-sm text-foreground leading-snug truncate">{latestNote.title || "Untitled"}</h3>
-                            <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(latestNote.updatedAt), 'MMM d')}</span>
+                            <h3 className="font-bold text-sm text-white/90 leading-snug truncate">{latestNote.title || "Untitled"}</h3>
+                            <span className="text-[10px] text-blue-200/35 shrink-0">{format(new Date(latestNote.updatedAt), 'MMM d')}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-5 leading-relaxed">{latestNote.content.replace(/<[^>]*>/g, '')}</p>
-                          {notes.length > 1 && <p className="text-[10px] text-muted-foreground/50 mt-2">+{notes.length - 1} more</p>}
+                          <p className="text-xs text-blue-200/50 line-clamp-5 leading-relaxed">{latestNote.content.replace(/<[^>]*>/g, '')}</p>
+                          {notes.length > 1 && <p className="text-[10px] text-blue-200/25 mt-2">+{notes.length - 1} more</p>}
                         </div>
                       )}
                     </WidgetCard>
@@ -419,31 +444,24 @@ export default function Dashboard() {
                 {/* Goals */}
                 {widgets.goals && (
                   <motion.div key="goals" variants={fade} layout className="min-h-[200px] lg:min-h-0">
-                    <WidgetCard
-                      gradient="from-pink-500/12 to-transparent"
-                      border="border-pink-500/25"
-                      glow="0 0 30px rgba(236,72,153,0.08)"
-                      headerAccent="text-pink-400"
-                      title="Goals"
-                      sub={`${doneGoals.length} of ${goals.length} completed · ${goalPct}%`}
-                      href="/goals"
-                      arrowColor="text-pink-400"
-                    >
+                    <WidgetCard accentRgb="236,72,153" headerAccent="text-pink-400"
+                      title="Goals" sub={`${doneGoals.length} of ${goals.length} completed · ${goalPct}%`}
+                      href="/goals">
                       {goals.length === 0 ? (
                         <EmptyState icon={<Target className="w-9 h-9 text-pink-400" />} label="No goals set yet." linkHref="/goals" linkLabel="Set one →" />
                       ) : (
-                        <div className="space-y-2">
-                          <div className="mb-3">
+                        <div className="space-y-2.5">
+                          <div>
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] text-muted-foreground">Overall progress</span>
-                              <span className="text-[10px] font-semibold text-pink-400">{goalPct}%</span>
+                              <span className="text-[10px] text-blue-200/40">Overall progress</span>
+                              <span className="text-[10px] font-bold text-pink-400">{goalPct}%</span>
                             </div>
-                            <div className="h-1.5 rounded-full bg-secondary/70 overflow-hidden">
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(236,72,153,0.12)" }}>
                               <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${goalPct}%` }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                className="h-full rounded-full bg-gradient-to-r from-pink-500 to-pink-400"
+                                initial={{ width: 0 }} animate={{ width: `${goalPct}%` }}
+                                transition={{ duration: 0.9, ease: "easeOut" }}
+                                className="h-full rounded-full"
+                                style={{ background: "linear-gradient(90deg, #ec4899, #f472b6)", boxShadow: "0 0 8px rgba(236,72,153,0.5)" }}
                               />
                             </div>
                           </div>
@@ -451,21 +469,21 @@ export default function Dashboard() {
                             <RowItem key={goal.id}>
                               <div className="relative w-7 h-7 shrink-0">
                                 <svg width="28" height="28" className="-rotate-90">
-                                  <circle cx="14" cy="14" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-border/60" />
-                                  <circle cx="14" cy="14" r="10" fill="none" stroke="rgb(244 114 182)" strokeWidth="2.5"
+                                  <circle cx="14" cy="14" r="10" fill="none" stroke="rgba(236,72,153,0.15)" strokeWidth="2.5" />
+                                  <circle cx="14" cy="14" r="10" fill="none" stroke="#ec4899" strokeWidth="2.5"
                                     strokeDasharray={2 * Math.PI * 10}
                                     strokeDashoffset={2 * Math.PI * 10 * (1 - goal.progress / 100)}
-                                    strokeLinecap="round" className="transition-all" />
+                                    strokeLinecap="round" style={{ filter: "drop-shadow(0 0 3px rgba(236,72,153,0.6))" }} />
                                 </svg>
-                                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-foreground">{goal.progress}%</span>
+                                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/80">{goal.progress}%</span>
                               </div>
                               <div className="flex-1 min-w-0 ml-3">
-                                <p className="text-xs font-medium text-foreground truncate">{goal.title}</p>
-                                {goal.targetDate && <p className="text-[10px] text-muted-foreground">Due {format(new Date(goal.targetDate), 'MMM d, yy')}</p>}
+                                <p className="text-xs font-medium text-white/85 truncate">{goal.title}</p>
+                                {goal.targetDate && <p className="text-[10px] text-blue-200/40">Due {format(new Date(goal.targetDate), 'MMM d, yy')}</p>}
                               </div>
                             </RowItem>
                           ))}
-                          {activeGoals.length > 5 && <p className="text-[10px] text-muted-foreground text-center">+{activeGoals.length - 5} more</p>}
+                          {activeGoals.length > 5 && <p className="text-[10px] text-blue-200/30 text-center">+{activeGoals.length - 5} more</p>}
                         </div>
                       )}
                     </WidgetCard>
@@ -476,9 +494,9 @@ export default function Dashboard() {
             </motion.div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
-              <Settings2 className="w-10 h-10 text-muted-foreground/20" />
-              <p className="text-sm font-medium text-muted-foreground">All widgets hidden</p>
-              <p className="text-xs text-muted-foreground/50">Click the settings icon in the header to show widgets.</p>
+              <Settings2 className="w-10 h-10" style={{ color: "rgba(100,130,255,0.20)" }} />
+              <p className="text-sm font-medium" style={{ color: "rgba(180,190,255,0.40)" }}>All widgets hidden</p>
+              <p className="text-xs" style={{ color: "rgba(180,190,255,0.25)" }}>Click the settings icon in the header to show widgets.</p>
             </div>
           )}
 

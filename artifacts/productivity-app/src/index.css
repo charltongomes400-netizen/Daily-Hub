@@ -143,60 +143,62 @@
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
-/* DARK MODE - Vision UI inspired: deep navy layers, elevated cards */
+/* DARK MODE - Vision UI: rich saturated indigo-navy */
 .dark {
   --button-outline: rgba(255,255,255, .08);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .03);
-  --elevate-2: rgba(255,255,255, .07);
+  --elevate-2: rgba(255,255,255, .06);
 
-  /* Page bg: very deep navy */
-  --background: 222 84% 4%;
-  --foreground: 210 40% 94%;
-  --border: 220 40% 18%;
+  /* Deep indigo-navy page background — Vision UI ~#0b0e2a */
+  --background: 232 73% 7%;
+  --foreground: 210 60% 96%;
+  --border: 232 48% 22%;
 
-  /* Cards: clearly elevated from the page */
-  --card: 222 60% 7%;
-  --card-foreground: 210 40% 94%;
-  --card-border: 220 40% 18%;
+  /* Cards: elevated navy — Vision UI ~#111c44 */
+  --card: 232 56% 12%;
+  --card-foreground: 210 60% 96%;
+  --card-border: 232 48% 22%;
 
-  /* Sidebar: one step lighter than cards for depth */
-  --sidebar: 222 60% 6%;
-  --sidebar-foreground: 210 40% 90%;
-  --sidebar-border: 220 40% 16%;
-  --sidebar-primary: 221 83% 55%;
+  /* Sidebar: slightly darker than cards */
+  --sidebar: 232 60% 10%;
+  --sidebar-foreground: 210 50% 90%;
+  --sidebar-border: 232 45% 18%;
+  --sidebar-primary: 221 100% 62%;
   --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 220 40% 11%;
-  --sidebar-accent-foreground: 210 40% 90%;
-  --sidebar-ring: 221 83% 55%;
+  --sidebar-accent: 232 50% 16%;
+  --sidebar-accent-foreground: 210 50% 90%;
+  --sidebar-ring: 221 100% 62%;
 
-  /* Popover: slightly above card */
-  --popover: 222 60% 9%;
-  --popover-foreground: 210 40% 94%;
-  --popover-border: 220 40% 22%;
+  /* Popover: lighter than card for floating feel */
+  --popover: 232 56% 15%;
+  --popover-foreground: 210 60% 96%;
+  --popover-border: 232 48% 28%;
 
-  --primary: 221 83% 55%;
+  /* Electric blue primary — Vision UI accent */
+  --primary: 221 100% 62%;
   --primary-foreground: 210 40% 98%;
 
-  --secondary: 220 40% 11%;
-  --secondary-foreground: 210 40% 94%;
+  /* Nested surfaces */
+  --secondary: 232 50% 17%;
+  --secondary-foreground: 210 60% 96%;
 
-  --muted: 220 40% 11%;
-  --muted-foreground: 215 20% 60%;
+  --muted: 232 50% 17%;
+  --muted-foreground: 220 28% 58%;
 
-  --accent: 220 40% 11%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 232 50% 17%;
+  --accent-foreground: 210 60% 98%;
 
-  --destructive: 0 72% 35%;
+  --destructive: 0 72% 38%;
   --destructive-foreground: 210 40% 98%;
 
-  --input: 220 40% 13%;
-  --ring: 221 83% 55%;
+  --input: 232 50% 17%;
+  --ring: 221 100% 62%;
 
-  --chart-1: 221 83% 55%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
+  --chart-1: 221 100% 62%;
+  --chart-2: 173 58% 42%;
+  --chart-3: 197 60% 38%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
 

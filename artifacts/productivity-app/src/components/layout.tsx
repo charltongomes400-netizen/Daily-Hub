@@ -69,8 +69,8 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* Sidebar top glow accent */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-primary/8 to-transparent pointer-events-none" />
 
-        {/* Logo */}
-        <div className={`relative p-4 pb-3 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+        {/* Logo + collapse toggle */}
+        <div className={`relative p-4 pb-3 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/40 group-hover:shadow-primary/60 transition-shadow shrink-0">
               <span className="text-white text-xs font-bold tracking-tight">PH</span>
@@ -90,6 +90,22 @@ export function Layout({ children }: { children: ReactNode }) {
               )}
             </AnimatePresence>
           </Link>
+          <AnimatePresence initial={false}>
+            {!collapsed && (
+              <motion.button
+                key="collapse-btn"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                onClick={toggleCollapsed}
+                title="Collapse sidebar"
+                className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary/60 transition-all"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Nav */}
@@ -149,16 +165,18 @@ export function Layout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* Collapse toggle */}
-        <div className={`${collapsed ? "px-2 pb-3" : "px-3 pb-2"} flex ${collapsed ? "justify-center" : "justify-end"}`}>
-          <button
-            onClick={toggleCollapsed}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="p-2 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary/60 transition-all"
-          >
-            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-          </button>
-        </div>
+        {/* Expand toggle (only when collapsed) */}
+        {collapsed && (
+          <div className="px-2 pb-3 flex justify-center">
+            <button
+              onClick={toggleCollapsed}
+              title="Expand sidebar"
+              className="p-2 rounded-lg text-muted-foreground/40 hover:text-muted-foreground hover:bg-secondary/60 transition-all"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* User section */}
         {user && (

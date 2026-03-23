@@ -9,3 +9,4 @@ export * from "./notes";
 export * from "./goals";
 export * from "./savings";
 export * from "./investments";
+export * from "./gratitude";

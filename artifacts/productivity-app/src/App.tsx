@@ -9,6 +9,7 @@ import Finance from "@/pages/finance";
 import Gym from "@/pages/gym";
 import Goals from "@/pages/goals";
 import Notes from "@/pages/notes";
+import Gratitude from "@/pages/gratitude";
 import Login from "@/pages/login";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -60,6 +61,9 @@ function Router() {
       </Route>
       <Route path="/notes">
         <AuthGuard><Notes /></AuthGuard>
+      </Route>
+      <Route path="/gratitude">
+        <AuthGuard><Gratitude /></AuthGuard>
       </Route>
       <Route component={NotFound} />
     </Switch>

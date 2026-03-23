@@ -19,13 +19,17 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Application
 
-**Productivity Hub** - A centralized productivity app with a dark theme consisting of two core modules:
+**Productivity Hub** - A centralized productivity app with Vision UI dark theme (deep indigo-navy, glass-morph cards, electric blue primary). Modules:
 
-1. **Task Management** - Full to-do list with title, description, priority (low/medium/high), optional deadlines, completion toggling, and filtering.
-2. **Finance & Subscription Tracker** - Two tabs:
+1. **Dashboard** - Overview with task completion %, monthly expenses, active subscriptions cost, recent expense chart, upcoming tasks. Configurable widget visibility via dropdown.
+2. **Task Management** - Full to-do list with title, description, priority (low/medium/high), optional deadlines, completion toggling, and filtering.
+3. **Finance & Subscription Tracker** - Two tabs:
    - **Expenses**: Log daily expenses with title, amount, category, date, and notes. Shows monthly totals.
    - **Subscriptions**: Track recurring subscriptions with name, amount, billing cycle (monthly/quarterly/yearly), category, next billing date, and active/inactive status.
-3. **Dashboard** - Overview with task completion %, monthly expenses, active subscriptions cost, recent expense chart, and upcoming tasks.
+4. **Gym Planner** - Workout planning and tracking.
+5. **Goals** - Goal setting and progress tracking.
+6. **Notes** - Personal note-taking.
+7. **Gratitude Journal** - Daily gratitude entries (one per day, 140-char limit). Monthly grid view, streak counter, completion progress, today's spotlight, monthly wrap-up. Rose/warm color identity.
 
 ## Structure
 
@@ -64,6 +68,7 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `lib/db/src/schema/tasks.ts` — Tasks table (id, title, description, completed, priority, deadline, createdAt, updatedAt)
 - `lib/db/src/schema/expenses.ts` — Expenses table (id, title, amount, category, date, notes, createdAt)
 - `lib/db/src/schema/subscriptions.ts` — Subscriptions table (id, name, amount, billingCycle, category, nextBillingDate, isActive, notes, createdAt)
+- `lib/db/src/schema/gratitude.ts` — Gratitude entries table (id, userId, date, content, createdAt, updatedAt). One entry per user per day, 140-char max.
 
 ## API Routes
 
@@ -73,3 +78,6 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `DELETE /api/expenses/:id` — delete an expense
 - `GET/POST /api/subscriptions` — list and create subscriptions
 - `PATCH/DELETE /api/subscriptions/:id` — update and delete subscriptions
+- `GET /api/gratitude?month=N&year=N` — list gratitude entries for a month
+- `POST /api/gratitude` — create entry (date, content; max 140 chars; no future dates; unique per user+date)
+- `PATCH/DELETE /api/gratitude/:id` — update/delete gratitude entry

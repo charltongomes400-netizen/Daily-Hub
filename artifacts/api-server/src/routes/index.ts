@@ -11,6 +11,7 @@ import notesRouter from "./notes";
 import goalsRouter from "./goals";
 import savingsRouter from "./savings";
 import investmentsRouter from "./investments";
+import gratitudeRouter from "./gratitude";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use("/notes", notesRouter);
 router.use("/goals", goalsRouter);
 router.use("/savings", savingsRouter);
 router.use("/investments", investmentsRouter);
+router.use("/gratitude", gratitudeRouter);
 
 export default router;

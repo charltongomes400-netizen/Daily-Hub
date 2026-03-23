@@ -3,7 +3,7 @@ import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid, X, LayoutDashboard, CheckCircle2, Wallet,
-  Dumbbell, Target, StickyNote, LogOut, ChevronUp, ChevronRight,
+  Dumbbell, Target, StickyNote, Heart, LogOut, ChevronUp, ChevronRight,
   PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ const APPS = [
   { title: "Gym",       url: "/gym",     icon: Dumbbell,        gradient: "from-orange-500/20 to-orange-600/5", accent: "text-orange-400",  bg: "bg-orange-500/12",   border: "border-orange-500/20",  ring: "ring-orange-400/40",  glow: "shadow-orange-500/10" },
   { title: "Goals",     url: "/goals",   icon: Target,          gradient: "from-pink-500/20 to-pink-600/5",     accent: "text-pink-400",    bg: "bg-pink-500/12",     border: "border-pink-500/20",    ring: "ring-pink-400/40",    glow: "shadow-pink-500/10"   },
   { title: "Notes",     url: "/notes",   icon: StickyNote,      gradient: "from-amber-500/20 to-amber-600/5",   accent: "text-amber-400",   bg: "bg-amber-500/12",    border: "border-amber-500/20",   ring: "ring-amber-400/40",   glow: "shadow-amber-500/10"  },
+  { title: "Gratitude", url: "/gratitude", icon: Heart,         gradient: "from-rose-500/20 to-rose-600/5",    accent: "text-rose-400",    bg: "bg-rose-500/12",     border: "border-rose-500/20",    ring: "ring-rose-400/40",    glow: "shadow-rose-500/10"   },
 ];
 
 function Avatar({ src, name, size = 8 }: { src?: string | null; name?: string; size?: number }) {

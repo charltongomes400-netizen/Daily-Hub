@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Layout } from "@/components/layout";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -232,15 +233,16 @@ function SortableCategoryRow({
 
 /* ─── Sortable category tab (for the horizontal tab bar) ─────────── */
 function SortableCategoryTab({
-  cat, isActive, onClick, count,
+  cat, isActive, onClick, count, dragDisabled,
 }: {
   cat: { id: number; name: string; color: string; icon: string };
   isActive: boolean;
   onClick: () => void;
   count: number;
+  dragDisabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: cat.id });
+    useSortable({ id: cat.id, disabled: dragDisabled });
 
   const col  = getColor(cat.color);
   const Icon = getIcon(cat.icon);
@@ -252,9 +254,10 @@ function SortableCategoryTab({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(horizontalTransform), transition }}
       {...attributes}
-      {...listeners}
+      {...(!dragDisabled ? listeners : {})}
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-colors duration-200 cursor-grab active:cursor-grabbing select-none touch-none
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-colors duration-200 select-none
+        ${dragDisabled ? "" : "cursor-grab active:cursor-grabbing touch-none"}
         ${isActive
           ? `${col.bg} ${col.text} border-current/20 shadow-sm`
           : "bg-card/50 text-muted-foreground border-border/40 hover:border-border hover:text-foreground hover:bg-card"}
@@ -273,6 +276,7 @@ function SortableCategoryTab({
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Tasks() {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   /* data */
   const { data: tasks = [],      isLoading: loadingTasks } = useGetTasks();
@@ -690,6 +694,7 @@ export default function Tasks() {
                       isActive={activeCategory === cat.name}
                       onClick={() => setActiveCategory(cat.name)}
                       count={countFor(cat.name)}
+                      dragDisabled={isMobile}
                     />
                   ))}
                 </div>

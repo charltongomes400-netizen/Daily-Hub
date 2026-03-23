@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid, X, LayoutDashboard, CheckCircle2, Wallet,
   Dumbbell, Target, StickyNote, LogOut, ChevronUp, ChevronRight,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -31,6 +32,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
+  });
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -42,9 +46,13 @@ export function Layout({ children }: { children: ReactNode }) {
     setUserMenuOpen(false);
   }, [location]);
 
-  const currentApp = APPS.find(
-    a => a.url === location || (a.url !== "/" && location.startsWith(a.url)),
-  );
+  function toggleCollapsed() {
+    setCollapsed(c => {
+      const next = !c;
+      try { localStorage.setItem("sidebar-collapsed", String(next)); } catch {}
+      return next;
+    });
+  }
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background overflow-hidden relative">
@@ -52,62 +60,140 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[140px] pointer-events-none" />
 
       {/* ── Desktop Sidebar (lg+) ── */}
-      <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-border/50 bg-background/60 backdrop-blur-md z-20 relative">
-        <div className="p-5 pb-3">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
+      <motion.aside
+        animate={{ width: collapsed ? 68 : 220 }}
+        transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+        className="hidden lg:flex flex-col shrink-0 border-r border-border/50 bg-background/60 backdrop-blur-md z-20 relative overflow-hidden"
+      >
+        {/* Logo */}
+        <div className={`p-4 pb-3 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow shrink-0">
               <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
             </div>
-            <span className="font-display font-bold text-foreground text-sm leading-tight">
-              Productivity<br />Hub
-            </span>
+            <AnimatePresence initial={false}>
+              {!collapsed && (
+                <motion.span
+                  key="logo-text"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="font-display font-bold text-foreground text-sm leading-tight whitespace-nowrap overflow-hidden"
+                >
+                  Productivity<br />Hub
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1.5">
+        {/* Nav */}
+        <nav className={`flex-1 py-2 space-y-1.5 ${collapsed ? "px-2" : "px-3"}`}>
           {APPS.map(app => {
             const isActive = app.url === location || (app.url !== "/" && location.startsWith(app.url));
             return (
               <Link key={app.url} href={app.url}>
                 <div
+                  title={collapsed ? app.title : undefined}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer
+                    flex items-center rounded-xl cursor-pointer
                     transition-all duration-200 select-none group relative
+                    ${collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"}
                     ${isActive
                       ? `bg-gradient-to-r ${app.gradient} ${app.border} border shadow-md ${app.glow}`
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent"
                     }
                   `}
                 >
-                  {isActive && (
+                  {isActive && !collapsed && (
                     <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full ${app.bg} ${app.accent}`}
                       style={{ background: "currentColor", opacity: 0.7 }}
                     />
                   )}
                   <app.icon className={`w-5 h-5 shrink-0 ${isActive ? app.accent : "group-hover:text-foreground"}`} />
-                  <span className={`font-semibold text-sm flex-1 ${isActive ? app.accent : ""}`}>
-                    {app.title}
-                  </span>
-                  <ChevronRight className={`w-4 h-4 shrink-0 transition-all duration-200 ${isActive ? `${app.accent} opacity-80` : "text-muted-foreground/30 group-hover:text-muted-foreground/70 group-hover:translate-x-0.5"}`} />
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.span
+                        key="label"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className={`font-semibold text-sm flex-1 whitespace-nowrap overflow-hidden ${isActive ? app.accent : ""}`}
+                      >
+                        {app.title}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.div
+                        key="chevron"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.12 }}
+                      >
+                        <ChevronRight className={`w-4 h-4 shrink-0 transition-all duration-200 ${isActive ? `${app.accent} opacity-80` : "text-muted-foreground/30 group-hover:text-muted-foreground/70 group-hover:translate-x-0.5"}`} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </Link>
             );
           })}
         </nav>
 
-        {/* ── User section ── */}
+        {/* Collapse toggle */}
+        <div className={`${collapsed ? "px-2 pb-3" : "px-3 pb-2"} flex ${collapsed ? "justify-center" : "justify-end"}`}>
+          <button
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="p-2 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary/60 transition-all"
+          >
+            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* User section */}
         {user && (
-          <div className="px-3 pb-4 relative">
+          <div className={`${collapsed ? "px-2 pb-4" : "px-3 pb-4"} relative`}>
             <button
               onClick={() => setUserMenuOpen(o => !o)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary/60 border border-transparent hover:border-border/40 transition-all group"
+              title={collapsed ? user.name : undefined}
+              className={`w-full flex items-center rounded-xl hover:bg-secondary/60 border border-transparent hover:border-border/40 transition-all group
+                ${collapsed ? "justify-center p-2" : "gap-3 px-3 py-2.5"}`}
             >
               <Avatar src={user.avatarUrl} name={user.name} size={8} />
-              <div className="flex-1 text-left min-w-0">
-                <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
-              </div>
-              <ChevronUp className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${userMenuOpen ? "" : "rotate-180"}`} />
+              <AnimatePresence initial={false}>
+                {!collapsed && (
+                  <motion.div
+                    key="user-info"
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex-1 text-left min-w-0 overflow-hidden"
+                  >
+                    <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence initial={false}>
+                {!collapsed && (
+                  <motion.div
+                    key="chevron-up"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                  >
+                    <ChevronUp className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${userMenuOpen ? "" : "rotate-180"}`} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </button>
 
             <AnimatePresence>
@@ -117,21 +203,22 @@ export function Layout({ children }: { children: ReactNode }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute bottom-full left-3 right-3 mb-1 bg-popover border border-border/50 rounded-xl shadow-xl overflow-hidden"
+                  className={`absolute bottom-full mb-1 bg-popover border border-border/50 rounded-xl shadow-xl overflow-hidden
+                    ${collapsed ? "left-2 right-2" : "left-3 right-3"}`}
                 >
                   <button
                     onClick={() => { setUserMenuOpen(false); logout(); }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign out
+                    {!collapsed && "Sign out"}
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         )}
-      </aside>
+      </motion.aside>
 
       {/* ── Main content column ── */}
       <div className="flex flex-col flex-1 min-w-0 z-10 relative overflow-hidden">

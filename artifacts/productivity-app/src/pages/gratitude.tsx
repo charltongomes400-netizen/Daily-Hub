@@ -273,13 +273,15 @@ export default function Gratitude() {
                   <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: "rgba(10,14,50,0.5)" }} />
                 ))}
               </div>
-            ) : entries.length === 0 && isCurrentMonth ? (
-              <motion.div variants={fade} className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-                <Heart className="w-12 h-12 text-rose-400/20" />
-                <p className="text-sm font-medium" style={{ color: "rgba(180,190,255,0.40)" }}>A fresh month awaits.</p>
-                <p className="text-xs" style={{ color: "rgba(180,190,255,0.25)" }}>Start filling your gratitude grid — one moment at a time.</p>
-              </motion.div>
             ) : (
+              <>
+              {entries.length === 0 && isCurrentMonth && (
+                <motion.div variants={fade} className="flex flex-col items-center justify-center py-6 gap-2 text-center mb-3">
+                  <Heart className="w-10 h-10 text-rose-400/20" />
+                  <p className="text-sm font-medium" style={{ color: "rgba(180,190,255,0.40)" }}>A fresh month awaits.</p>
+                  <p className="text-xs" style={{ color: "rgba(180,190,255,0.25)" }}>Tap any day to start filling your gratitude grid.</p>
+                </motion.div>
+              )}
               <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-1.5">
                 {days.map((day, idx) => {
                   const dateStr = format(day, "yyyy-MM-dd");
@@ -341,6 +343,7 @@ export default function Gratitude() {
                   );
                 })}
               </motion.div>
+              </>
             )}
           </motion.div>
         </motion.div>

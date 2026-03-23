@@ -2,7 +2,7 @@ import { useGetTasks, useGetExpenses, useGetSubscriptions } from "@workspace/api
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import {
-  Wallet, ArrowRight, Dumbbell, Moon, Flame, StickyNote, Target,
+  Wallet, ArrowRight, Dumbbell, Moon, Flame, StickyNote, Target, Heart,
   CheckCircle2, Settings2, Eye, EyeOff, X,
 } from "lucide-react";
 import { Layout } from "@/components/layout";
@@ -15,6 +15,7 @@ import { Link } from "wouter";
 interface GymExercise { id: number; dayOfWeek: number; name: string; sets: number | null; reps: number | null; weight: string | null; notes: string | null; }
 interface Note { id: number; title: string; content: string; updatedAt: string; }
 interface Goal { id: number; title: string; description: string | null; status: "active" | "completed"; progress: number; targetDate: string | null; category: string | null; }
+interface GratitudeEntry { id: number; date: string; content: string; createdAt: string; updatedAt: string; }
 
 type WidgetId = "tasks" | "gym" | "notes" | "goals";
 const WIDGET_META: { id: WidgetId; label: string; color: string }[] = [
@@ -156,6 +157,11 @@ export default function Dashboard() {
   const { data: gymExercises = [] } = useQuery<GymExercise[]>({ queryKey: ["/api/gym"],   queryFn: () => fetch("/api/gym").then(r => r.json()) });
   const { data: notes = [] }        = useQuery<Note[]>({        queryKey: ["/api/notes"], queryFn: () => fetch("/api/notes").then(r => r.json()) });
   const { data: goals = [] }        = useQuery<Goal[]>({        queryKey: ["/api/goals"], queryFn: () => fetch("/api/goals").then(r => r.json()) });
+  const gratMonth = new Date().getMonth() + 1;
+  const gratYear = new Date().getFullYear();
+  const prevGratDate = new Date(gratYear, gratMonth - 2, 1);
+  const { data: gratEntries = [] }  = useQuery<GratitudeEntry[]>({ queryKey: ["/api/gratitude", gratMonth, gratYear], queryFn: () => fetch(`/api/gratitude?month=${gratMonth}&year=${gratYear}`).then(r => r.json()) });
+  const { data: prevGratEntries = [] } = useQuery<GratitudeEntry[]>({ queryKey: ["/api/gratitude", prevGratDate.getMonth() + 1, prevGratDate.getFullYear()], queryFn: () => fetch(`/api/gratitude?month=${prevGratDate.getMonth() + 1}&year=${prevGratDate.getFullYear()}`).then(r => r.json()) });
 
   const todayIdx        = new Date().getDay();
   const restDays        = getRestDays();
@@ -170,6 +176,19 @@ export default function Dashboard() {
   const doneGoals       = goals.filter(g => g.status === "completed");
   const goalPct         = goals.length === 0 ? 0 : Math.round((doneGoals.length / goals.length) * 100);
   const pendingTasks    = tasks.filter(t => !t.completed).length;
+  const allGratEntries  = [...gratEntries, ...prevGratEntries];
+  const gratDateSet     = new Set(allGratEntries.map(e => e.date));
+  const gratStreak      = (() => {
+    if (allGratEntries.length === 0) return 0;
+    let streak = 0;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let d = new Date(today);
+    const fmt = (dt: Date) => dt.toISOString().slice(0, 10);
+    if (!gratDateSet.has(fmt(d))) { d.setDate(d.getDate() - 1); }
+    while (gratDateSet.has(fmt(d))) { streak++; d = new Date(d); d.setDate(d.getDate() - 1); }
+    return streak;
+  })();
+  const gratThisMonth   = gratEntries.length;
   const isLoading       = lt || le || ls;
 
   const fade    = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 260, damping: 24 } } };
@@ -320,12 +339,12 @@ export default function Dashboard() {
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/goals" label="Goals Complete" sub={`${doneGoals.length} of ${goals.length} total`}
-                value={<>{goalPct}<span className="text-2xl text-white/40">%</span></>}
-                iconBg="bg-pink-500"
-                iconShadow="0 4px 20px rgba(236,72,153,0.50)"
-                borderGlow="rgba(236,72,153,0.28)"
-                icon={<Target className="w-5 h-5 text-white" />}
+              <StatTile href="/gratitude" label="Gratitude Streak" sub={`${gratThisMonth} entr${gratThisMonth !== 1 ? "ies" : "y"} this month`}
+                value={<>{gratStreak}<span className="text-2xl text-white/40"> day{gratStreak !== 1 ? "s" : ""}</span></>}
+                iconBg="bg-rose-500"
+                iconShadow="0 4px 20px rgba(244,63,94,0.50)"
+                borderGlow="rgba(244,63,94,0.28)"
+                icon={<Heart className="w-5 h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>

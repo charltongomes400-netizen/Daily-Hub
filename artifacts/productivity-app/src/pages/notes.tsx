@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
-  Trash2, Edit2, X, Pin, PinOff, Archive, ArchiveRestore, Search, Palette,
+  Trash2, Edit2, X, Pin, PinOff, Archive, ArchiveRestore, Search, Palette, Pencil,
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   Heading1, Heading2, Heading3, List, ListOrdered, Quote,
   Code, FileCode, Minus, Undo2, Redo2,
@@ -211,7 +211,7 @@ function InlineCreate({ onSave }: { onSave: (data: Partial<Note>) => void }) {
   }, [expanded, save]);
 
   return (
-    <div ref={wrapperRef} className={`rounded-2xl border shadow-lg transition-all duration-200 max-w-2xl mx-auto mb-8 overflow-hidden ${col.bg} ${col.border}`}>
+    <div ref={wrapperRef} className={`rounded-2xl border shadow-lg transition-all duration-200 mb-8 overflow-hidden ${col.bg} ${col.border}`}>
       {expanded ? (
         <div>
           <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" maxLength={150}
@@ -232,8 +232,12 @@ function InlineCreate({ onSave }: { onSave: (data: Partial<Note>) => void }) {
         </div>
       ) : (
         <button type="button" onClick={() => setExpanded(true)}
-          className="w-full px-4 py-3.5 text-left text-sm text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-          Take a note…
+          className="w-full flex items-center gap-3 px-5 py-4 text-left group transition-all hover:bg-amber-500/5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/25 group-hover:border-amber-500/40 transition-all">
+            <Pencil className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <span className="text-sm font-medium text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">Take a note…</span>
+          <span className="ml-auto text-xs text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors hidden sm:block">Click to start writing</span>
         </button>
       )}
     </div>

@@ -142,7 +142,8 @@ export default function Dashboard() {
             </div>
             <div className="hidden sm:block text-right shrink-0">
               <div className="text-3xl font-display font-bold tabular-nums text-foreground/90 leading-none">
-                {format(now, 'HH:mm')}
+                {format(now, 'h:mm')}
+                <span className="text-base font-semibold text-muted-foreground ml-1">{format(now, 'aa')}</span>
               </div>
             </div>
           </motion.div>

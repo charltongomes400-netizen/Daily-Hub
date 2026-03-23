@@ -54,7 +54,7 @@ function StatTile({ href, label, sub, value, icon, iconBg, iconShadow, borderGlo
   return (
     <Link href={href}>
       <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
-        className="group flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl cursor-pointer transition-all"
+        className="group flex items-start justify-between gap-3 p-5 rounded-2xl cursor-pointer transition-all"
         style={{
           background: "linear-gradient(127deg, rgba(6,11,40,0.85) 20%, rgba(10,14,35,0.55) 77%)",
           border: `1px solid ${borderGlow}`,
@@ -63,9 +63,9 @@ function StatTile({ href, label, sub, value, icon, iconBg, iconShadow, borderGlo
         }}
       >
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold text-blue-200/50 uppercase tracking-widest leading-none">{label}</p>
-          <div className="text-[1.75rem] font-display font-bold text-white tabular-nums leading-tight mt-1.5">{value}</div>
-          <p className="text-[10px] text-blue-200/40 mt-0.5 leading-none">{sub}</p>
+          <p className="text-[11px] font-semibold text-blue-200/50 uppercase tracking-widest leading-none">{label}</p>
+          <div className="text-[2rem] font-display font-bold text-white tabular-nums leading-tight mt-2">{value}</div>
+          <p className="text-[11px] text-blue-200/40 mt-1 leading-none">{sub}</p>
         </div>
         <IconBox bg={iconBg} shadow={iconShadow}>{icon}</IconBox>
       </motion.div>
@@ -86,11 +86,11 @@ function WidgetCard({ headerAccent, accentRgb, title, sub, href, children }: {
         boxShadow: `0 0 40px rgba(${accentRgb}, 0.07), 0 2px 20px rgba(0,0,0,0.4)`,
       }}>
       {/* header stripe */}
-      <div className="flex items-center justify-between px-4 py-3 shrink-0"
+      <div className="flex items-center justify-between px-5 py-4 pb-3 shrink-0"
         style={{ borderBottom: `1px solid rgba(${accentRgb}, 0.15)` }}>
         <div>
           <p className={`text-sm font-bold ${headerAccent}`}>{title}</p>
-          <p className="text-[10px] text-blue-200/40 mt-0.5">{sub}</p>
+          <p className="text-[11px] text-blue-200/40 mt-0.5">{sub}</p>
         </div>
         <Link href={href}>
           <div className={`p-1.5 rounded-xl ${headerAccent} opacity-40 hover:opacity-90 transition-opacity`}>
@@ -98,7 +98,7 @@ function WidgetCard({ headerAccent, accentRgb, title, sub, href, children }: {
           </div>
         </Link>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-3 pt-2.5">{children}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4 pt-3">{children}</div>
     </div>
   );
 }
@@ -115,7 +115,7 @@ function EmptyState({ icon, label, linkHref, linkLabel }: { icon: React.ReactNod
 
 function RowItem({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-3 py-1.5 rounded-xl"
+    <div className="flex items-center justify-between px-3 py-2 rounded-xl"
       style={{ background: "rgba(10,14,50,0.60)", border: "1px solid rgba(100,130,255,0.12)" }}>
       {children}
     </div>
@@ -197,7 +197,7 @@ export default function Dashboard() {
     <>
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
-        <div className="flex flex-col gap-3 p-3 h-full overflow-y-auto lg:overflow-hidden">
+        <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto lg:overflow-hidden">
 
           {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">
@@ -216,16 +216,16 @@ export default function Dashboard() {
               <div className="absolute top-0 left-0 right-0 h-px"
                 style={{ background: "linear-gradient(90deg, transparent, rgba(150,120,255,0.5), transparent)" }} />
 
-              <div className="relative flex items-center justify-between px-5 py-3.5 gap-4">
+              <div className="relative flex items-center justify-between px-6 py-5 gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mb-1"
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-1.5"
                     style={{ color: "rgba(160,140,255,0.70)" }}>
                     {format(now, 'EEEE, MMMM d')}
                   </p>
-                  <h1 className="text-xl sm:text-2xl font-display font-bold text-white leading-tight">
+                  <h1 className="text-2xl sm:text-3xl font-display font-bold text-white leading-tight">
                     {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
                   </h1>
-                  <p className="text-xs mt-1.5" style={{ color: "rgba(180,190,255,0.55)" }}>
+                  <p className="text-sm mt-2" style={{ color: "rgba(180,190,255,0.55)" }}>
                     {pendingTasks > 0
                       ? <><span className="text-white font-semibold">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
                       : <>All caught up · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
@@ -236,11 +236,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 shrink-0">
                   {/* Clock */}
                   <div className="hidden sm:flex flex-col items-end">
-                    <p className="text-3xl font-display font-bold tabular-nums leading-none"
+                    <p className="text-4xl font-display font-bold tabular-nums leading-none"
                       style={{ color: "rgba(220,225,255,0.95)" }}>
                       {format(now, 'h:mm')}
                     </p>
-                    <p className="text-xs font-semibold mt-0.5" style={{ color: "rgba(160,170,255,0.50)" }}>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "rgba(160,170,255,0.50)" }}>
                       {format(now, 'aa')}
                     </p>
                   </div>
@@ -342,7 +342,7 @@ export default function Dashboard() {
           {visibleWidgets.length > 0 ? (
             <motion.div
               variants={stagger} initial="hidden" animate="show"
-              className={`grid gap-3 flex-1 min-h-0
+              className={`grid gap-3 lg:gap-4 flex-1 min-h-0
                 ${visibleWidgets.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
             >
               <AnimatePresence>

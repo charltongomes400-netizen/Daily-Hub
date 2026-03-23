@@ -178,7 +178,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="p-4 flex flex-col gap-4 animate-pulse h-full">
+        <div className="p-4 flex flex-col gap-4 animate-pulse h-full" style={{ zoom: 1.25 }}>
           <div className="h-36 rounded-2xl" style={{ background: "rgba(10,14,50,0.7)", border: "1px solid rgba(100,130,255,0.15)" }} />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl" style={{ background: "rgba(10,14,50,0.7)" }} />)}
@@ -197,7 +197,7 @@ export default function Dashboard() {
     <>
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
-        <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto lg:overflow-hidden">
+        <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto" style={{ zoom: 1.25 }}>
 
           {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">

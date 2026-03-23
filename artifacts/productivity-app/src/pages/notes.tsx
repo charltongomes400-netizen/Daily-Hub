@@ -234,8 +234,8 @@ function InlineCreate({ onSave }: { onSave: (data: Partial<Note>) => void }) {
         <button type="button" onClick={() => setExpanded(true)}
           className="w-full flex items-center gap-3 px-5 py-4 text-left group transition-all hover:bg-amber-500/5">
           <span className="text-sm font-medium text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">Take a note…</span>
-          <span className="ml-auto text-xs text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors hidden sm:block">Click to start writing</span>
-          <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/25 group-hover:border-amber-500/40 transition-all">
+          <span className="text-xs text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors hidden sm:block">Click to start writing</span>
+          <div className="ml-auto w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/25 group-hover:border-amber-500/40 transition-all">
             <Pencil className="w-3.5 h-3.5 text-amber-400" />
           </div>
         </button>

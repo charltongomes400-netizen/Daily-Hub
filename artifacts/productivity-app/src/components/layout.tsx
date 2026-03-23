@@ -162,7 +162,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
         {/* User section */}
         {user && (
-          <div className={`${collapsed ? "px-2 pb-4" : "px-3 pb-4"} relative`}>
+          <div className={`${collapsed ? "px-2 pb-4" : "px-3 pb-4"} relative mt-auto`}>
             <button
               onClick={() => setUserMenuOpen(o => !o)}
               title={collapsed ? user.name : undefined}

@@ -385,59 +385,50 @@ export default function Gym() {
         </div>
 
         {/* Day selector */}
-        <div className="overflow-x-auto -mx-4 px-4 mb-6 pb-1">
-        <div className="grid grid-cols-7 gap-2 min-w-[400px]">
-          {DAYS.map((day, i) => {
-            const count = exercisesByDay[i].length;
-            const isToday = i === todayIndex;
-            const isSelected = i === selectedDay;
-            const isRest = restDaySet.has(i);
-            return (
-              <button
-                key={day}
-                onClick={() => setSelectedDay(i)}
-                className={`
-                  relative flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all
-                  ${isSelected && isRest
-                    ? "bg-amber-400/15 border-amber-400/50 text-amber-400 shadow-md shadow-amber-400/10"
-                    : isSelected
-                    ? "bg-primary/10 border-primary/40 text-primary shadow-md shadow-primary/10"
-                    : isRest
-                    ? "bg-amber-400/8 border-amber-400/30 text-amber-400/80 hover:bg-amber-400/12"
-                    : isToday
-                    ? "bg-accent/5 border-accent/30 text-foreground hover:bg-accent/10"
-                    : "bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
-                `}
-              >
-                {isToday && !isRest && (
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent" />
-                )}
-                {isRest && (
-                  <span className="absolute top-1.5 right-1.5">
-                    <Moon className="w-3 h-3 text-amber-400" />
+        <div className="overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 mb-6 pb-1">
+          <div className="grid grid-cols-7 gap-2 min-w-[420px]">
+            {DAYS.map((day, i) => {
+              const count = exercisesByDay[i].length;
+              const isToday = i === todayIndex;
+              const isSelected = i === selectedDay;
+              const isRest = restDaySet.has(i);
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(i)}
+                  className={`
+                    relative flex flex-col items-center gap-1 py-3 px-1 rounded-2xl border transition-all overflow-hidden min-h-[72px]
+                    ${isSelected && isRest
+                      ? "bg-amber-400/15 border-amber-400/50 text-amber-400 shadow-md shadow-amber-400/10"
+                      : isSelected
+                      ? "bg-primary/10 border-primary/40 text-primary shadow-md shadow-primary/10"
+                      : isRest
+                      ? "bg-amber-400/8 border-amber-400/30 text-amber-400/80 hover:bg-amber-400/12"
+                      : isToday
+                      ? "bg-accent/5 border-accent/30 text-foreground hover:bg-accent/10"
+                      : "bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
+                  `}
+                >
+                  {isToday && !isRest && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent" />
+                  )}
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">{DAYS_SHORT[i]}</span>
+                  {isRest ? (
+                    <Moon className="w-4 h-4 opacity-70" />
+                  ) : count > 0 ? (
+                    <span className={`text-base font-display font-bold leading-none ${isSelected ? "text-primary" : ""}`}>
+                      {count}
+                    </span>
+                  ) : (
+                    <span className="text-base font-display font-bold leading-none opacity-20">–</span>
+                  )}
+                  <span className="text-[10px] opacity-60 truncate w-full text-center">
+                    {isRest ? "rest" : count > 0 ? (count === 1 ? "ex." : "exs.") : ""}
                   </span>
-                )}
-                <span className="text-xs font-semibold uppercase tracking-wider">{DAYS_SHORT[i]}</span>
-                {isRest ? (
-                  <Moon className="w-4 h-4 opacity-70" />
-                ) : count > 0 ? (
-                  <span className={`text-lg font-display font-bold leading-none ${isSelected ? "text-primary" : ""}`}>
-                    {count}
-                  </span>
-                ) : (
-                  <span className="text-lg font-display font-bold leading-none opacity-20">–</span>
-                )}
-                {isRest ? (
-                  <span className="text-[10px] opacity-70">rest</span>
-                ) : count > 0 ? (
-                  <span className="text-[10px] opacity-60">
-                    {count === 1 ? "exercise" : "exercises"}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Day detail */}

@@ -93,7 +93,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav className={`relative flex-1 py-2 space-y-1 ${collapsed ? "px-2" : "px-3"}`}>
+        <nav className={`relative py-2 space-y-1 ${collapsed ? "px-2" : "px-3"}`}>
           {APPS.map(app => {
             const isActive = app.url === location || (app.url !== "/" && location.startsWith(app.url));
             return (

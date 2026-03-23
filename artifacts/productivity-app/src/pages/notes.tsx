@@ -392,8 +392,8 @@ export default function Notes() {
   return (
     <Layout>
       <div className="p-4 md:p-8 max-w-6xl mx-auto flex flex-col h-full pb-20">
-        <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-          <div>
+        <div className="mb-6 flex items-center gap-4 flex-wrap">
+          <div className="shrink-0">
             <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">Notes</h1>
             <p className="text-muted-foreground mt-1">{showArchive ? "Archived notes" : "Keep your thoughts and ideas organized."}</p>
           </div>

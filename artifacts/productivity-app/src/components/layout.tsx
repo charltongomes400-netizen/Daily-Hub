@@ -149,6 +149,8 @@ export function Layout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
+        <div className="flex-1" />
+
         {/* Collapse toggle */}
         <div className={`${collapsed ? "px-2 pb-3" : "px-3 pb-2"} flex ${collapsed ? "justify-center" : "justify-end"}`}>
           <button

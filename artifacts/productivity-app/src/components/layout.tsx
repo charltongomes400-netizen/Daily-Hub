@@ -55,7 +55,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background overflow-hidden relative" style={{ zoom: 1.25 }}>
+    <div className="flex flex-col lg:flex-row w-full bg-background overflow-hidden relative" style={{ zoom: 1.25, height: "calc(100vh / 1.25)" }}>
       {/* Vision UI ambient background glows */}
       <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] rounded-full bg-violet-500/6 blur-[160px] pointer-events-none" />
       <div className="absolute bottom-[-15%] right-[-5%] w-[40%] h-[40%] rounded-full bg-blue-500/6 blur-[120px] pointer-events-none" />

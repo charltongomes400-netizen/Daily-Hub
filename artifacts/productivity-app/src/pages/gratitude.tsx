@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isFuture, isAfter, subMonths, addMonths, differenceInCalendarDays, startOfDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isFuture, isAfter, subMonths, addMonths, getDay, startOfDay } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ChevronLeft, ChevronRight, Flame, Sparkles, X, Pencil, Trash2, Image } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Flame, Sparkles, X, Pencil, Trash2, Image, Lock, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface GratitudeEntry {
@@ -55,11 +55,14 @@ function computeStreak(entries: GratitudeEntry[]): number {
   return streak;
 }
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export default function Gratitude() {
   const queryClient = useQueryClient();
   const [viewDate, setViewDate] = useState(new Date());
   const month = viewDate.getMonth() + 1;
   const year = viewDate.getFullYear();
+  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [modalDate, setModalDate] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<GratitudeEntry | null>(null);
   const [content, setContent] = useState("");
@@ -90,7 +93,9 @@ export default function Gratitude() {
   });
   const deleteMut = useMutation({
     mutationFn: apiDelete,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/gratitude"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/gratitude"] });
+    },
   });
 
   const entryMap = new Map<string, GratitudeEntry>();
@@ -108,6 +113,26 @@ export default function Gratitude() {
   const isCurrentMonth = viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
 
   const todayEntry = entryMap.get(format(today, "yyyy-MM-dd"));
+
+  const startDayOfWeek = getDay(monthStart);
+
+  const selectedEntry = entryMap.get(selectedDate);
+  const selectedDay = selectedDate ? new Date(selectedDate + "T00:00:00") : null;
+  const isSelectedFuture = selectedDay ? isFuture(selectedDay) : false;
+  const isSelectedToday = selectedDay ? isToday(selectedDay) : false;
+
+  function handleMonthNav(direction: "prev" | "next") {
+    const newDate = direction === "prev" ? subMonths(viewDate, 1) : addMonths(viewDate, 1);
+    setViewDate(newDate);
+    const newMonthStart = startOfMonth(newDate);
+    const newToday = startOfDay(new Date());
+    const newIsCurrentMonth = newDate.getMonth() === newToday.getMonth() && newDate.getFullYear() === newToday.getFullYear();
+    if (newIsCurrentMonth) {
+      setSelectedDate(format(newToday, "yyyy-MM-dd"));
+    } else {
+      setSelectedDate(format(newMonthStart, "yyyy-MM-dd"));
+    }
+  }
 
   function openModal(dateStr: string) {
     const existing = entryMap.get(dateStr);
@@ -152,7 +177,7 @@ export default function Gratitude() {
 
   return (
     <Layout>
-      <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col h-full overflow-y-auto">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto flex flex-col h-full overflow-y-auto">
         <motion.div variants={fade} initial="hidden" animate="show">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
@@ -229,7 +254,7 @@ export default function Gratitude() {
                 <p className="text-sm text-white/85 leading-relaxed line-clamp-2 relative">{todayEntry.content}</p>
               </div>
             ) : isCurrentMonth ? (
-              <button onClick={() => openModal(format(today, "yyyy-MM-dd"))}
+              <button onClick={() => { setSelectedDate(format(today, "yyyy-MM-dd")); openModal(format(today, "yyyy-MM-dd")); }}
                 className="rounded-2xl p-4 text-left transition-all hover:scale-[1.01] cursor-pointer"
                 style={{
                   background: "linear-gradient(135deg, rgba(244,63,94,0.06), rgba(251,146,60,0.04))",
@@ -252,99 +277,235 @@ export default function Gratitude() {
           </motion.div>
 
           <motion.div variants={fade}>
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setViewDate(subMonths(viewDate, 1))}
-                className="p-2 rounded-xl text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60 transition-all">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <h2 className="font-display font-bold text-lg text-foreground">
-                {format(viewDate, "MMMM yyyy")}
-              </h2>
-              <button onClick={() => canGoNext && setViewDate(addMonths(viewDate, 1))}
-                disabled={!canGoNext}
-                className={`p-2 rounded-xl transition-all ${canGoNext ? "text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60" : "text-muted-foreground/20 cursor-not-allowed"}`}>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="lg:w-[38%] shrink-0">
+                <div className="rounded-2xl p-4"
+                  style={{
+                    background: "linear-gradient(127deg, rgba(6,11,40,0.85) 20%, rgba(10,14,35,0.55) 77%)",
+                    border: "1px solid rgba(100,130,255,0.12)",
+                    backdropFilter: "blur(12px)",
+                  }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <button onClick={() => handleMonthNav("prev")}
+                      className="p-2 rounded-xl text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60 transition-all">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <h2 className="font-display font-bold text-lg text-foreground">
+                      {format(viewDate, "MMMM yyyy")}
+                    </h2>
+                    <button onClick={() => canGoNext && handleMonthNav("next")}
+                      disabled={!canGoNext}
+                      className={`p-2 rounded-xl transition-all ${canGoNext ? "text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60" : "text-muted-foreground/20 cursor-not-allowed"}`}>
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
 
-            {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: "rgba(10,14,50,0.5)" }} />
-                ))}
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {WEEKDAYS.map(d => (
+                      <div key={d} className="text-center text-[10px] font-semibold text-blue-200/40 uppercase py-1">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {isLoading ? (
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: 35 }).map((_, i) => (
+                        <div key={i} className="aspect-square rounded-lg animate-pulse" style={{ background: "rgba(10,14,50,0.5)" }} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: startDayOfWeek }).map((_, i) => (
+                        <div key={`empty-${i}`} className="aspect-square" />
+                      ))}
+                      {days.map(day => {
+                        const dateStr = format(day, "yyyy-MM-dd");
+                        const entry = entryMap.get(dateStr);
+                        const isTodayDay = isToday(day);
+                        const isFutureDay = isFuture(day);
+                        const isSelected = selectedDate === dateStr;
+                        const dayNum = day.getDate();
+                        const idx = dayNum - 1;
+                        const hue = 350 + (idx / totalDays) * 30;
+
+                        return (
+                          <button
+                            key={dateStr}
+                            onClick={() => setSelectedDate(dateStr)}
+                            className={`aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition-all relative ${
+                              isFutureDay ? "opacity-30 cursor-default" : "cursor-pointer hover:scale-105"
+                            }`}
+                            style={{
+                              background: isSelected
+                                ? "linear-gradient(135deg, rgba(244,63,94,0.35), rgba(251,146,60,0.25))"
+                                : entry
+                                ? `hsla(${hue},60%,50%,0.20)`
+                                : isFutureDay
+                                ? "rgba(100,130,255,0.03)"
+                                : "rgba(100,130,255,0.06)",
+                              border: isSelected
+                                ? "1.5px solid rgba(244,63,94,0.6)"
+                                : entry
+                                ? `1px solid hsla(${hue},60%,50%,0.30)`
+                                : "1px solid rgba(100,130,255,0.08)",
+                              color: isSelected
+                                ? "#fff"
+                                : entry
+                                ? `hsla(${hue},60%,70%,0.9)`
+                                : isFutureDay
+                                ? "rgba(100,130,255,0.20)"
+                                : "rgba(180,190,255,0.50)",
+                              boxShadow: isSelected
+                                ? "0 0 12px rgba(244,63,94,0.3)"
+                                : entry
+                                ? `0 0 6px hsla(${hue},60%,50%,0.10)`
+                                : "none",
+                            }}
+                          >
+                            {dayNum}
+                            {isTodayDay && (
+                              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-rose-400" />
+                            )}
+                            {entry && !isSelected && (
+                              <Heart className="absolute top-0.5 right-0.5 w-2 h-2 text-rose-400 fill-rose-400 opacity-60" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-center gap-4 mt-4 pt-3" style={{ borderTop: "1px solid rgba(100,130,255,0.08)" }}>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsla(355,60%,50%,0.25)", border: "1px solid hsla(355,60%,50%,0.35)" }} />
+                      <span className="text-[10px] text-blue-200/40">Filled</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "rgba(100,130,255,0.06)", border: "1px solid rgba(100,130,255,0.08)" }} />
+                      <span className="text-[10px] text-blue-200/40">Empty</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                      <span className="text-[10px] text-blue-200/40">Today</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <>
-              {entries.length === 0 && isCurrentMonth && (
-                <motion.div variants={fade} className="flex flex-col items-center justify-center py-6 gap-2 text-center mb-3">
-                  <Heart className="w-10 h-10 text-rose-400/20" />
-                  <p className="text-sm font-medium" style={{ color: "rgba(180,190,255,0.40)" }}>A fresh month awaits.</p>
-                  <p className="text-xs" style={{ color: "rgba(180,190,255,0.25)" }}>Tap any day to start filling your gratitude grid.</p>
-                </motion.div>
-              )}
-              <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-1.5">
-                {days.map((day, idx) => {
-                  const dateStr = format(day, "yyyy-MM-dd");
-                  const entry = entryMap.get(dateStr);
-                  const isTodayDay = isToday(day);
-                  const isFutureDay = isFuture(day);
-                  const dayNum = day.getDate();
-                  const intensity = idx / totalDays;
-                  const fillHue = 350 + intensity * 30;
 
-                  return (
-                    <motion.div key={dateStr} variants={fade}>
-                      {entry ? (
-                        <div
-                          onClick={() => openModal(dateStr)}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:scale-[1.005] group ${isTodayDay ? "ring-1 ring-rose-400/40" : ""}`}
-                          style={{
-                            background: `linear-gradient(135deg, hsla(${fillHue},70%,50%,0.10), hsla(${fillHue + 20},70%,50%,0.05))`,
-                            border: `1px solid hsla(${fillHue},70%,50%,0.20)`,
-                          }}
-                        >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: `hsla(${fillHue},60%,50%,0.15)` }}>
-                            <span className="text-xs font-bold" style={{ color: `hsla(${fillHue},60%,70%,0.9)` }}>{dayNum}</span>
+              <div className="lg:flex-1 min-w-0">
+                <div className="rounded-2xl p-5 min-h-[300px] flex flex-col"
+                  style={{
+                    background: "linear-gradient(127deg, rgba(6,11,40,0.85) 20%, rgba(10,14,35,0.55) 77%)",
+                    border: "1px solid rgba(100,130,255,0.12)",
+                    backdropFilter: "blur(12px)",
+                  }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={selectedDate}
+                      initial={{ opacity: 0, x: 12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -12 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col flex-1"
+                    >
+                      {selectedDay && (
+                        <>
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <p className="text-xs font-semibold text-rose-400/70 uppercase tracking-widest">
+                                {format(selectedDay, "EEEE")}
+                              </p>
+                              <h3 className="text-xl font-display font-bold text-white mt-1">
+                                {format(selectedDay, "MMMM d, yyyy")}
+                              </h3>
+                              {isSelectedToday && (
+                                <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                  style={{ background: "rgba(244,63,94,0.15)", color: "rgba(244,63,94,0.8)", border: "1px solid rgba(244,63,94,0.25)" }}>
+                                  Today
+                                </span>
+                              )}
+                            </div>
+                            {selectedEntry && (
+                              <Heart className="w-6 h-6 text-rose-400 fill-rose-400/40" />
+                            )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white/85 truncate">{entry.content}</p>
-                            <p className="text-[10px] text-blue-200/35 mt-0.5">{format(day, "EEEE")}</p>
-                          </div>
-                          <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : isFutureDay ? (
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl opacity-30"
-                          style={{ background: "rgba(10,14,50,0.30)", border: "1px solid rgba(100,130,255,0.06)" }}>
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(100,130,255,0.06)" }}>
-                            <span className="text-xs font-bold text-blue-200/30">{dayNum}</span>
-                          </div>
-                          <p className="text-xs text-blue-200/25">{format(day, "EEEE")}</p>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => openModal(dateStr)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-rose-500/5 hover:border-rose-500/20 group text-left ${isTodayDay ? "ring-1 ring-rose-400/30" : ""}`}
-                          style={{ background: "rgba(10,14,50,0.40)", border: "1px dashed rgba(100,130,255,0.12)" }}
-                        >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-rose-500/10 transition-colors"
-                            style={{ background: "rgba(100,130,255,0.08)" }}>
-                            <span className="text-xs font-bold text-blue-200/40 group-hover:text-rose-400/70 transition-colors">{dayNum}</span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-blue-200/30 group-hover:text-rose-300/50 transition-colors">
-                              {isTodayDay ? "What are you grateful for today?" : format(day, "EEEE")}
-                            </p>
-                          </div>
-                          <Pencil className="w-3 h-3 text-blue-200/15 group-hover:text-rose-400/40 transition-colors shrink-0" />
-                        </button>
+
+                          {selectedEntry ? (
+                            <div className="flex-1 flex flex-col">
+                              <div className="flex-1 rounded-xl p-4 mb-4"
+                                style={{
+                                  background: "linear-gradient(135deg, rgba(244,63,94,0.06), rgba(251,146,60,0.03))",
+                                  border: "1px solid rgba(244,63,94,0.15)",
+                                }}>
+                                <p className="text-white/90 leading-relaxed text-sm">{selectedEntry.content}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => openModal(selectedDate)}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
+                                  style={{
+                                    background: "rgba(244,63,94,0.10)",
+                                    border: "1px solid rgba(244,63,94,0.25)",
+                                    color: "rgba(244,63,94,0.8)",
+                                  }}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(selectedEntry.id)}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
+                                  style={{
+                                    background: "rgba(239,68,68,0.08)",
+                                    border: "1px solid rgba(239,68,68,0.20)",
+                                    color: "rgba(239,68,68,0.7)",
+                                  }}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ) : isSelectedFuture ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+                              <div className="p-4 rounded-2xl mb-3" style={{ background: "rgba(100,130,255,0.06)" }}>
+                                <Lock className="w-8 h-8 text-blue-200/25" />
+                              </div>
+                              <p className="text-sm font-medium text-blue-200/40">This day hasn't arrived yet</p>
+                              <p className="text-xs text-blue-200/25 mt-1">Come back on {format(selectedDay, "MMMM d")} to add your entry.</p>
+                            </div>
+                          ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+                              <div className="p-4 rounded-2xl mb-3" style={{ background: "rgba(244,63,94,0.06)" }}>
+                                <Sparkles className="w-8 h-8 text-rose-400/30" />
+                              </div>
+                              <p className="text-sm font-medium text-blue-200/50">
+                                {isSelectedToday ? "What are you grateful for today?" : "No entry for this day"}
+                              </p>
+                              <p className="text-xs text-blue-200/30 mt-1 mb-4">
+                                {isSelectedToday ? "Take a moment to reflect on something positive." : "You can still add a gratitude entry for this day."}
+                              </p>
+                              <button
+                                onClick={() => openModal(selectedDate)}
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.03]"
+                                style={{
+                                  background: "linear-gradient(135deg, #f43f5e, #fb923c)",
+                                  boxShadow: "0 4px 15px rgba(244,63,94,0.35)",
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                                Add Entry
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </motion.div>
-                  );
-                })}
-              </motion.div>
-              </>
-            )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
 

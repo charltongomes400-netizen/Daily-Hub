@@ -197,7 +197,7 @@ export default function Dashboard() {
     <>
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
-        <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
+        <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto lg:overflow-hidden">
 
           {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">

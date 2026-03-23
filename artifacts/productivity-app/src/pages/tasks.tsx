@@ -358,7 +358,9 @@ export default function Tasks() {
     (a, b) => catOrder.indexOf(a.id) - catOrder.indexOf(b.id),
   );
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: { distance: isMobile ? 99999 : 5 },
+  }));
 
   const handleCatDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -668,7 +670,7 @@ export default function Tasks() {
         </div>{/* end header */}
 
         {/* ── Category Tabs ── */}
-        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2">
           {/* All tab */}
           <button
             onClick={() => setActiveCategory("all")}
@@ -686,7 +688,7 @@ export default function Tasks() {
           {!loadingCats && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCatDragEnd}>
               <SortableContext items={catOrder} strategy={horizontalListSortingStrategy}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {sortedCategories.map(cat => (
                     <SortableCategoryTab
                       key={cat.id}

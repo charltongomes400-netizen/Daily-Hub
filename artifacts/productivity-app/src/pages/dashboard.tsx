@@ -40,7 +40,7 @@ function getRestDays(): Set<number> {
 /* Vision UI style icon box */
 function IconBox({ children, bg, shadow }: { children: React.ReactNode; bg: string; shadow: string }) {
   return (
-    <div className={`p-3 rounded-2xl flex items-center justify-center shrink-0 ${bg}`}
+    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${bg}`}
       style={{ boxShadow: shadow }}>
       {children}
     </div>
@@ -55,7 +55,7 @@ function StatTile({ href, label, sub, value, icon, iconBg, iconShadow, borderGlo
   return (
     <Link href={href}>
       <motion.div whileHover={{ y: -2, scale: 1.01 }} transition={{ duration: 0.15 }}
-        className="group flex items-start justify-between gap-3 p-5 rounded-2xl cursor-pointer transition-all"
+        className="group flex flex-col gap-2 p-3 sm:p-5 rounded-2xl cursor-pointer transition-all h-full"
         style={{
           background: "linear-gradient(127deg, rgba(6,11,40,0.85) 20%, rgba(10,14,35,0.55) 77%)",
           border: `1px solid ${borderGlow}`,
@@ -63,12 +63,14 @@ function StatTile({ href, label, sub, value, icon, iconBg, iconShadow, borderGlo
           boxShadow: "0 2px 20px rgba(0,0,0,0.4)",
         }}
       >
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-blue-200/50 uppercase tracking-widest leading-none">{label}</p>
-          <div className="text-[2rem] font-display font-bold text-white tabular-nums leading-tight mt-2">{value}</div>
-          <p className="text-[11px] text-blue-200/40 mt-1 leading-none">{sub}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-blue-200/50 uppercase tracking-widest leading-none truncate">{label}</p>
+          <IconBox bg={iconBg} shadow={iconShadow}>{icon}</IconBox>
         </div>
-        <IconBox bg={iconBg} shadow={iconShadow}>{icon}</IconBox>
+        <div className="min-w-0 mt-auto">
+          <div className="text-xl sm:text-[2rem] font-display font-bold text-white tabular-nums leading-tight">{value}</div>
+          <p className="text-[10px] sm:text-[11px] text-blue-200/40 mt-1 leading-none truncate">{sub}</p>
+        </div>
       </motion.div>
     </Link>
   );
@@ -216,7 +218,7 @@ export default function Dashboard() {
     <>
       {showWelcome && <WelcomeAnimation name={user?.name ?? ""} onComplete={() => setShowWelcome(false)} />}
       <Layout>
-        <div className="flex flex-col gap-4 p-4 h-full">
+        <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 h-full">
 
           {/* ── HERO ─────────────────────────────────────────────── */}
           <motion.div variants={fade} initial="hidden" animate="show" className="shrink-0">
@@ -237,16 +239,16 @@ export default function Dashboard() {
                   style={{ background: "linear-gradient(90deg, transparent, rgba(150,120,255,0.5), transparent)" }} />
               </div>
 
-              <div className="relative flex items-center justify-between px-6 py-5 gap-4">
+              <div className="relative flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 gap-3 sm:gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-1.5"
+                  <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] mb-1 sm:mb-1.5"
                     style={{ color: "rgba(160,140,255,0.70)" }}>
                     {format(now, 'EEEE, MMMM d')}
                   </p>
-                  <h1 className="text-2xl sm:text-3xl font-display font-bold text-white leading-tight">
+                  <h1 className="text-xl sm:text-3xl font-display font-bold text-white leading-tight">
                     {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
                   </h1>
-                  <p className="text-sm mt-2" style={{ color: "rgba(180,190,255,0.55)" }}>
+                  <p className="text-xs sm:text-sm mt-1.5 sm:mt-2" style={{ color: "rgba(180,190,255,0.55)" }}>
                     {pendingTasks > 0
                       ? <><span className="text-white font-semibold">{pendingTasks}</span> task{pendingTasks !== 1 ? "s" : ""} pending · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
                       : <>All caught up · <span style={{ color: "#4ade80" }} className="font-semibold">${monthSpend.toFixed(2)}</span> spent this month</>
@@ -318,42 +320,42 @@ export default function Dashboard() {
 
           {/* ── STAT TILES ───────────────────────────────────────── */}
           <motion.div variants={stagger} initial="hidden" animate="show"
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+            className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 shrink-0">
 
             <motion.div variants={fade}>
-              <StatTile href="/tasks" label="Tasks Pending" sub="across all lists"
+              <StatTile href="/tasks" label="Tasks" sub="across all lists"
                 value={pendingTasks}
                 iconBg="bg-blue-500"
                 iconShadow="0 4px 20px rgba(59,130,246,0.50)"
                 borderGlow="rgba(59,130,246,0.28)"
-                icon={<CheckCircle2 className="w-5 h-5 text-white" />}
+                icon={<CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/finance" label="Spent This Month" sub="total expenses"
+              <StatTile href="/finance" label="Spending" sub="total this month"
                 value={<>${monthSpend.toFixed(0)}</>}
                 iconBg="bg-emerald-500"
                 iconShadow="0 4px 20px rgba(16,185,129,0.50)"
                 borderGlow="rgba(16,185,129,0.28)"
-                icon={<Wallet className="w-5 h-5 text-white" />}
+                icon={<Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/gratitude" label="Gratitude Streak" sub={`${gratThisMonth} entr${gratThisMonth !== 1 ? "ies" : "y"} this month`}
-                value={<>{gratStreak}<span className="text-2xl text-white/40"> day{gratStreak !== 1 ? "s" : ""}</span></>}
+              <StatTile href="/gratitude" label="Gratitude" sub={`${gratThisMonth} entr${gratThisMonth !== 1 ? "ies" : "y"} this month`}
+                value={<>{gratStreak}<span className="text-base sm:text-2xl text-white/40"> day{gratStreak !== 1 ? "s" : ""}</span></>}
                 iconBg="bg-rose-500"
                 iconShadow="0 4px 20px rgba(244,63,94,0.50)"
                 borderGlow="rgba(244,63,94,0.28)"
-                icon={<Heart className="w-5 h-5 text-white" />}
+                icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
               />
             </motion.div>
             <motion.div variants={fade}>
-              <StatTile href="/gym" label="Today's Exercises" sub={isTodayRest ? "rest day" : `${weekDays} days/week`}
-                value={isTodayRest ? <Moon className="w-7 h-7 inline" style={{ color: "rgba(200,210,255,0.30)" }} /> : todaysExercises.length}
+              <StatTile href="/gym" label="Exercises" sub={isTodayRest ? "rest day" : `${weekDays} days/week`}
+                value={isTodayRest ? <Moon className="w-6 h-6 sm:w-7 sm:h-7 inline" style={{ color: "rgba(200,210,255,0.30)" }} /> : todaysExercises.length}
                 iconBg="bg-orange-500"
                 iconShadow="0 4px 20px rgba(249,115,22,0.50)"
                 borderGlow="rgba(249,115,22,0.28)"
-                icon={<Dumbbell className="w-5 h-5 text-white" />}
+                icon={<Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
               />
             </motion.div>
 

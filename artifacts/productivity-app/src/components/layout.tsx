@@ -56,20 +56,24 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background overflow-hidden relative">
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[140px] pointer-events-none" />
+      {/* Vision UI ambient background glows */}
+      <div className="absolute top-[-15%] left-[-5%] w-[50%] h-[50%] rounded-full bg-violet-500/6 blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-[-15%] right-[-5%] w-[40%] h-[40%] rounded-full bg-blue-500/6 blur-[120px] pointer-events-none" />
 
       {/* ── Desktop Sidebar (lg+) ── */}
       <motion.aside
         animate={{ width: collapsed ? 68 : 220 }}
         transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-        className="hidden lg:flex flex-col shrink-0 border-r border-border/50 bg-background/60 backdrop-blur-md z-20 relative overflow-hidden"
+        className="hidden lg:flex flex-col shrink-0 border-r border-border/40 bg-card z-20 relative overflow-hidden"
       >
+        {/* Sidebar top glow accent */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-primary/8 to-transparent pointer-events-none" />
+
         {/* Logo */}
-        <div className={`p-4 pb-3 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+        <div className={`relative p-4 pb-3 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow shrink-0">
-              <span className="text-primary-foreground text-xs font-bold tracking-tight">PH</span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/40 group-hover:shadow-primary/60 transition-shadow shrink-0">
+              <span className="text-white text-xs font-bold tracking-tight">PH</span>
             </div>
             <AnimatePresence initial={false}>
               {!collapsed && (
@@ -89,7 +93,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav className={`flex-1 py-2 space-y-1.5 ${collapsed ? "px-2" : "px-3"}`}>
+        <nav className={`relative flex-1 py-2 space-y-1 ${collapsed ? "px-2" : "px-3"}`}>
           {APPS.map(app => {
             const isActive = app.url === location || (app.url !== "/" && location.startsWith(app.url));
             return (
@@ -101,8 +105,8 @@ export function Layout({ children }: { children: ReactNode }) {
                     transition-all duration-200 select-none group relative
                     ${collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"}
                     ${isActive
-                      ? `bg-gradient-to-r ${app.gradient} ${app.border} border shadow-md ${app.glow}`
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent"
+                      ? `bg-gradient-to-r ${app.gradient} ${app.border} border shadow-lg ${app.glow}`
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 border border-transparent hover:border-border/30"
                     }
                   `}
                 >

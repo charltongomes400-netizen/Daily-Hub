@@ -394,7 +394,7 @@ export default function Finance() {
         </div>
 
         <Tabs defaultValue="expenses" className="flex-1 flex flex-col">
-          <TabsList className="flex w-full overflow-x-auto bg-secondary/50 p-1 mb-8 rounded-md [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <TabsList className="flex w-full overflow-x-auto overflow-y-hidden bg-secondary/50 p-1 mb-8 rounded-md [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <TabsTrigger value="expenses"      className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
             <TabsTrigger value="subscriptions" className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Subscriptions</TabsTrigger>
             <TabsTrigger value="owed"          className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm relative">

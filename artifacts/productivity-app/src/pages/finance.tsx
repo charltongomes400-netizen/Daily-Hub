@@ -394,10 +394,10 @@ export default function Finance() {
         </div>
 
         <Tabs defaultValue="expenses" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full max-w-4xl grid-cols-6 bg-secondary/50 p-1 mb-8">
-            <TabsTrigger value="expenses"      className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-            <TabsTrigger value="subscriptions" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Subscriptions</TabsTrigger>
-            <TabsTrigger value="owed"          className="data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
+          <TabsList className="flex w-full overflow-x-auto bg-secondary/50 p-1 mb-8 rounded-md [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <TabsTrigger value="expenses"      className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+            <TabsTrigger value="subscriptions" className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Subscriptions</TabsTrigger>
+            <TabsTrigger value="owed"          className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
               Owed to Me
               {owedToMe.filter(o => o.status === "pending").length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-[10px] font-bold text-white flex items-center justify-center">
@@ -405,7 +405,7 @@ export default function Finance() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="owed-to-others" className="data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
+            <TabsTrigger value="owed-to-others" className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm relative">
               Owed to Others
               {owedToOthers.filter(o => o.status === "pending").length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-[10px] font-bold text-white flex items-center justify-center">
@@ -413,8 +413,8 @@ export default function Finance() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="savings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Savings</TabsTrigger>
-            <TabsTrigger value="investments" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Investments</TabsTrigger>
+            <TabsTrigger value="savings"      className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Savings</TabsTrigger>
+            <TabsTrigger value="investments"  className="shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm">Investments</TabsTrigger>
           </TabsList>
 
           {/* ── EXPENSES TAB ───────────────────────────────────────────── */}

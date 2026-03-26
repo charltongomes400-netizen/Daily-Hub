@@ -172,7 +172,7 @@ export default function Dashboard() {
   const weekDays        = Array.from({ length: 7 }, (_, i) => i).filter(i => !restDays.has(i) && gymExercises.some(e => e.dayOfWeek === i)).length;
   const curMonth        = now.getMonth();
   const curYear         = now.getFullYear();
-  const monthSpend      = expenses.filter(e => { const d = new Date(e.date); return d.getMonth() === curMonth && d.getFullYear() === curYear; }).reduce((s, e) => s + e.amount, 0);
+  const monthSpend      = expenses.filter(e => { const d = new Date(e.date); return e.type === "expense" && d.getMonth() === curMonth && d.getFullYear() === curYear; }).reduce((s, e) => s + parseFloat(String(e.amount)), 0);
   const latestNote      = [...notes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
   const activeGoals     = goals.filter(g => g.status === "active");
   const doneGoals       = goals.filter(g => g.status === "completed");
